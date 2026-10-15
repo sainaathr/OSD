@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSD — Know Your Machine // PC Health & Performance Intelligence</title>
+  <meta name="description" content="OSD translates operating system telemetry into clear diagnostic narratives, resource exhaustion runways, and safe recovery paths. Know your machine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* =====================================================================
+       OSD DESIGN SYSTEM — INDUSTRIAL EDITORIAL & INSTRUMENT READOUTS
+       ===================================================================== */
+    :root {
+      --bg-canvas: #F6F6F2;
+      --bg-surface: #FFFFFF;
+      --bg-subtle: #EFEFE9;
+      --bg-dark: #0D0E11;
+      --bg-dark-card: #15171C;
+      --bg-dark-elevated: #1D2027;
+      
+      --text-ink: #111215;
+      --text-secondary: #565A63;
+      --text-muted: #888E99;
+      --text-light: #F4F5F1;
+      --text-light-dim: #9EA3B0;
+      
+      --border-subtle: #E2E2DB;
+      --border-dark: #242730;
+      --border-dark-highlight: #363B48;
+      
+      --accent-lime: #D4FF00;
+      --accent-lime-hover: #C2EA00;
+      --accent-lime-dim: rgba(212, 255, 0, 0.12);
+      
+      --signal-green: #10B981;
+      --signal-green-dim: rgba(16, 185, 129, 0.12);
+      --signal-amber: #F59E0B;
+      --signal-amber-dim: rgba(245, 158, 11, 0.12);
+      --signal-red: #EF4444;
+      --signal-red-dim: rgba(239, 68, 68, 0.12);
+      --signal-cyan: #22D3EE;
+      
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-body: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html {
+      scroll-behavior: smooth;
+      background: var(--bg-canvas);
+      color: var(--text-ink);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background: var(--bg-canvas);
+      color: var(--text-ink);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background: var(--accent-lime);
+      color: #000;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* =====================================================================
+       TYPOGRAPHY TOKENS
+       ===================================================================== */
+    .mono { font-family: var(--font-mono); }
+    .display { font-family: var(--font-display); }
+    
+    .tech-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .tech-eyebrow::before {
+      content: "";
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--text-ink);
+    }
+    
+    .tech-eyebrow.lime::before {
+      background: var(--accent-lime);
+      box-shadow: 0 0 8px var(--accent-lime);
+    }
+
+    /* =====================================================================
+       GLOBAL NAVIGATION
+       ===================================================================== */
+    .nav-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(246, 246, 242, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 64px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-ink);
+    }
+
+    .brand-reticle {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--text-ink);
+      color: var(--accent-lime);
+      border-radius: 4px;
+    }
+
+    .brand-tagline-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      border-radius: 3px;
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .nav-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-link span.num {
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      color: var(--text-muted);
+    }
+
+    .nav-link:hover {
+      color: var(--text-ink);
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .telemetry-ticker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 5px 12px;
+      border-radius: 4px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--signal-green);
+      display: inline-block;
+      box-shadow: 0 0 6px var(--signal-green);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Buttons */
+    .btn-osd-primary {
+      background: var(--accent-lime);
+      color: var(--text-ink);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 700;
+      padding: 10px 18px;
+      border: 1px solid #111215;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 2px 2px 0px #111215;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .btn-osd-primary:hover {
+      background: var(--accent-lime-hover);
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px #111215;
+    }
+
+    .btn-osd-primary:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px #111215;
+    }
+
+    .btn-osd-dark {
+      background: var(--bg-dark);
+      color: var(--text-light);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border: 1px solid var(--border-dark-highlight);
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+    }
+
+    .btn-osd-dark:hover {
+      background: #1a1c22;
+      border-color: var(--accent-lime);
+      color: var(--accent-lime);
+    }
+
+    .btn-osd-secondary {
+      background: var(--bg-surface);
+      color: var(--text-ink);
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 10px 18px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+    }
+
+    .btn-osd-secondary:hover {
+      background: var(--bg-subtle);
+      border-color: var(--text-ink);
+    }
+
+    /* Mode Pill Toggle */
+    .view-mode-toggle {
+      display: inline-flex;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 2px;
+      border-radius: 4px;
+    }
+
+    .view-mode-btn {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .view-mode-btn.active {
+      background: var(--bg-surface);
+      color: var(--text-ink);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-weight: 700;
+    }
+
+    /* =====================================================================
+       HERO SECTION
+       ===================================================================== */
+    .hero-section {
+      padding: 72px 48px 84px 48px;
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.05fr 1.15fr;
+      gap: 56px;
+      align-items: center;
+    }
+
+    .hero-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 3.8rem;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      color: var(--text-ink);
+    }
+
+    .hero-title span.lime-mark {
+      background: linear-gradient(180deg, transparent 65%, var(--accent-lime) 65%);
+      display: inline;
+      padding: 0 4px;
+    }
+
+    .hero-subtext {
+      font-size: 1.15rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      max-width: 540px;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .hero-specs-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      color: var(--text-muted);
+    }
+
+    .hero-specs-row span.spec-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-specs-row span.spec-item::before {
+      content: "•";
+      color: var(--accent-lime);
+      font-weight: bold;
+    }
+
+    /* =====================================================================
+       HERO INSTRUMENT CONSOLE PREVIEW (INDUSTRIAL RACK STYLE)
+       ===================================================================== */
+    .instrument-rack {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .instrument-rack::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 255, 0, 0.6), transparent);
+    }
+
+    .rack-header {
+      background: var(--bg-dark-card);
+      border-bottom: 1px solid var(--border-dark);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+    }
+
+    .rack-header-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-light-dim);
+    }
+
+    .rack-screws {
+      display: flex;
+      gap: 5px;
+    }
+
+    .rack-screws span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2A2E38;
+      border: 1px solid #1B1E26;
+      display: inline-block;
+    }
+
+    .rack-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Oscilloscope Trace Canvas */
+    .scope-box {
+      background: #090A0C;
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 12px 14px;
+      position: relative;
+    }
+
+    .scope-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      color: var(--text-light-dim);
+    }
+
+    canvas.oscilloscope {
+      width: 100%;
+      height: 90px;
+      display: block;
+      background: transparent;
+    }
+
+    /* Grid Instrument Metrics */
+    .rack-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 16px;
+    }
+
+    .rack-health-dial {
+      background: var(--bg-dark-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .dial-score {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--accent-lime);
+      margin: 4px 0;
+    }
+
+    .dial-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-light-dim);
+    }
+
+    .dial-status {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--signal-green);
+      margin-top: 4px;
+    }
+
+    .rack-telemetry-meters {
+      background: var(--bg-dark-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 4px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .meter-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .meter-label {
+      width: 45px;
+      color: var(--text-light-dim);
+    }
+
+    .meter-track {
+      flex: 1;
+      height: 6px;
+      background: #090A0D;
+      border: 1px solid #1E222A;
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .meter-fill {
+      height: 100%;
+      background: var(--accent-lime);
+      transition: width 0.3s ease;
+    }
+
+    .meter-fill.cyan { background: var(--signal-cyan); }
+    .meter-fill.amber { background: var(--signal-amber); }
+    .meter-fill.green { background: var(--signal-green); }
+
+    .meter-val {
+      width: 45px;
+      text-align: right;
+      color: var(--text-light);
+      font-weight: 600;
+    }
+
+    /* Live Root-Cause Diagnostic Callout inside Rack */
+    .rack-diagnostic-strip {
+      background: rgba(212, 255, 0, 0.04);
+      border: 1px solid rgba(212, 255, 0, 0.25);
+      border-left: 3px solid var(--accent-lime);
+      border-radius: 4px;
+      padding: 12px 14px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .strip-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .strip-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-diagnostic {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-diagnostic.healthy { background: var(--signal-green-dim); color: var(--signal-green); }
+    .badge-diagnostic.warning { background: var(--signal-amber-dim); color: var(--signal-amber); }
+    .badge-diagnostic.critical { background: var(--signal-red-dim); color: var(--signal-red); }
+
+    .strip-desc {
+      font-size: 0.78rem;
+      color: var(--text-light-dim);
+    }
+
+    .strip-action {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent-lime);
+      margin-top: 2px;
+    }
+
+    .rack-footer {
+      background: var(--bg-dark-card);
+      border-top: 1px solid var(--border-dark);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-light-dim);
+    }
+
+    /* =====================================================================
+       SECTION 2: EDITORIAL CASE STUDIES (THE PROBLEM)
+       ===================================================================== */
+    .section-editorial {
+      padding: 96px 48px;
+      max-width: 1440px;
+      margin: 0 auto;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .section-header-block {
+      max-width: 680px;
+      margin-bottom: 56px;
+    }
+
+    .section-headline {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      color: var(--text-ink);
+      margin: 12px 0 16px 0;
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .case-studies-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .case-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .case-card:hover {
+      border-color: var(--text-ink);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.04);
+    }
+
+    .case-number {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    .case-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text-ink);
+    }
+
+    .case-quote {
+      font-style: italic;
+      color: var(--text-secondary);
+      font-size: 0.90rem;
+      border-left: 2px solid var(--border-subtle);
+      padding-left: 12px;
+    }
+
+    .case-reality {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .case-solution {
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px dashed var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-ink);
+      font-weight: 600;
+    }
+
+    .case-solution span.highlight {
+      background: var(--accent-lime);
+      color: #000;
+      padding: 1px 4px;
+    }
+
+    /* =====================================================================
+       SECTION 3: THE SIGNATURE DIAGNOSTIC LOOP (OBSERVE -> UNDERSTAND -> ACT -> VERIFY)
+       ===================================================================== */
+    .section-loop {
+      background: var(--bg-dark);
+      color: var(--text-light);
+      padding: 104px 48px;
+    }
+
+    .section-loop-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .loop-headline {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin: 12px 0 16px 0;
+      color: var(--text-light);
+    }
+
+    .loop-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .loop-step {
+      background: var(--bg-dark-card);
+      border: 1px solid var(--border-dark);
+      border-radius: 6px;
+      padding: 28px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+    }
+
+    .loop-step:hover {
+      border-color: var(--border-dark-highlight);
+    }
+
+    .loop-index {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-lime);
+      letter-spacing: 0.1em;
+    }
+
+    .loop-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-light);
+    }
+
+    .loop-desc {
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text-light-dim);
+    }
+
+    .loop-tech-specs {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-light-dim);
+      background: #090A0D;
+      border: 1px solid var(--border-dark);
+      padding: 10px 12px;
+      border-radius: 4px;
+      line-height: 1.6;
+      margin-top: auto;
+    }
+
+    /* =====================================================================
+       SECTION 4: PRODUCT SHOWCASE (GALLERY WITH REAL UI SCREENSHOTS)
+       ===================================================================== */
+    .section-showcase {
+      padding: 96px 48px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .suite-nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .suite-tab {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-secondary);
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+
+    .suite-tab:hover {
+      color: var(--text-ink);
+      background: var(--bg-subtle);
+    }
+
+    .suite-tab.active {
+      color: var(--text-ink);
+      background: var(--bg-surface);
+      border-color: var(--border-subtle);
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+
+    .suite-display-container {
+      background: var(--bg-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.12);
+      display: grid;
+      grid-template-columns: 1fr 320px;
+    }
+
+    .suite-screen-wrapper {
+      padding: 24px;
+      background: #0A0B0E;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--border-dark);
+    }
+
+    .suite-screen-img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      border: 1px solid var(--border-dark);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .suite-screen-annotations {
+      padding: 28px 24px;
+      background: var(--bg-dark-card);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .suite-ann-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .suite-ann-desc {
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: var(--text-light-dim);
+    }
+
+    .suite-ann-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 0.82rem;
+      color: var(--text-light);
+      border-top: 1px solid var(--border-dark);
+      padding-top: 14px;
+    }
+
+    .suite-ann-list li {
+      list-style: none;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .suite-ann-list li::before {
+      content: "→";
+      color: var(--accent-lime);
+      font-family: var(--font-mono);
+    }
+
+    /* =====================================================================
+       SECTION 5: LIVE INTERACTIVE WHAT-IF SANDBOX
+       ===================================================================== */
+    .section-sandbox {
+      background: var(--bg-subtle);
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 96px 48px;
+    }
+
+    .sandbox-container {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .sandbox-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 32px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .sandbox-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .sandbox-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .sim-stat-box {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 16px 18px;
+    }
+
+    .sim-stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.70rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .sim-stat-num {
+      font-family: var(--font-display);
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--text-ink);
+    }
+
+    .sim-stat-sub {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .sandbox-table-wrapper {
+      max-height: 380px;
+      overflow-y: auto;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+    }
+
+    table.osd-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    table.osd-table th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-canvas);
+      padding: 10px 14px;
+      text-align: left;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      border-bottom: 2px solid var(--border-subtle);
+    }
+
+    table.osd-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    table.osd-table tr:hover {
+      background: rgba(0,0,0,0.02);
+    }
+
+    /* =====================================================================
+       SECTION 6: PRIVACY & ZERO-CLOUD ARCHITECTURE
+       ===================================================================== */
+    .section-architecture {
+      padding: 96px 48px;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .arch-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .arch-card.dark {
+      background: var(--bg-dark);
+      color: var(--text-light);
+      border-color: var(--border-dark);
+    }
+
+    .arch-spec-table {
+      width: 100%;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .arch-spec-table tr {
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .arch-card.dark .arch-spec-table tr {
+      border-color: var(--border-dark);
+    }
+
+    .arch-spec-table td {
+      padding: 10px 0;
+    }
+
+    .arch-spec-table td.label {
+      color: var(--text-muted);
+      width: 150px;
+    }
+
+    /* =====================================================================
+       FULL INTEGRATED LIVE INSTRUMENT DASHBOARD
+       ===================================================================== */
+    #live-instrument-drawer {
+      display: none;
+      background: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      border-top: 2px solid var(--accent-lime);
+    }
+
+    #live-instrument-drawer.active {
+      display: block;
+    }
+
+    .live-dashboard-layout {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .live-sidebar {
+      width: 240px;
+      background: #0E1014;
+      border-right: 1px solid var(--border-dark);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .live-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: 4px;
+      color: var(--text-light-dim);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 500;
+      transition: var(--transition);
+      text-align: left;
+      width: 100%;
+    }
+
+    .live-nav-btn:hover {
+      background: #181A22;
+      color: var(--text-light);
+    }
+
+    .live-nav-btn.active {
+      background: #1D202A;
+      border-left: 3px solid var(--accent-lime);
+      color: var(--text-light);
+      font-weight: 700;
+    }
+
+    .live-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      background: #090A0D;
+    }
+
+    .dashboard-page { display: none; }
+    .dashboard-page.active { display: flex; flex-direction: column; gap: 20px; }
+
+    /* =====================================================================
+       FOOTER
+       ===================================================================== */
+    footer.osd-footer {
+      background: var(--bg-dark);
+      color: var(--text-light);
+      border-top: 1px solid var(--border-dark);
+      padding: 64px 48px 48px 48px;
+    }
+
+    .footer-grid {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1.5fr;
+      gap: 48px;
+    }
+
+    .footer-bottom {
+      max-width: 1440px;
+      margin: 48px auto 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-dark);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-light-dim);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .hero-section { grid-template-columns: 1fr; gap: 40px; padding: 48px 24px; }
+      .case-studies-grid { grid-template-columns: 1fr; }
+      .loop-grid { grid-template-columns: repeat(2, 1fr); }
+      .suite-display-container { grid-template-columns: 1fr; }
+      .sandbox-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+      .arch-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .nav-center { display: none; }
+      .hero-title { font-size: 2.6rem; }
+      .loop-grid { grid-template-columns: 1fr; }
+      .sandbox-metrics-grid { grid-template-columns: 1fr; }
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .nav-bar { padding: 12px 16px; }
+      .brand-tagline-pill { display: none; }
+      .telemetry-ticker { display: none; }
+      .hero-section { padding: 32px 16px; }
+      .hero-title { font-size: 2.1rem; line-height: 1.1; }
+      .hero-subtext { font-size: 0.95rem; }
+      .hero-cta-group { flex-direction: column; width: 100%; }
+      .btn-osd-primary, .btn-osd-secondary { width: 100%; justify-content: center; }
+      .section-editorial, .section-loop, .section-showcase, .section-sandbox, .section-architecture, .section-cta { padding: 48px 16px; }
+      .rack-grid { grid-template-columns: 1fr; }
+      .rack-health-dial { border-right: none; border-bottom: 1px solid var(--border-dark); }
+      .sandbox-toolbar { flex-direction: column; align-items: flex-start; }
+      footer.osd-footer { padding: 48px 16px 32px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- =====================================================================
+       TOP GLOBAL NAVIGATION
+       ===================================================================== -->
+  <header class="nav-bar">
+    <div class="brand-group">
+      <a href="#" class="brand-mark">
+        <span class="brand-reticle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>
+          </svg>
+        </span>
+        OSD
+      </a>
+      <span class="brand-tagline-pill">Know your machine</span>
+    </div>
+
+    <nav class="nav-center">
+      <a href="#problem" class="nav-link"><span class="num">01</span> The Fog</a>
+      <a href="#diagnostic-loop" class="nav-link"><span class="num">02</span> Diagnostic Loop</a>
+      <a href="#suite" class="nav-link"><span class="num">03</span> Product Suite</a>
+      <a href="#sandbox" class="nav-link"><span class="num">04</span> What-If Sandbox</a>
+      <a href="#architecture" class="nav-link"><span class="num">05</span> Architecture</a>
+    </nav>
+
+    <div class="nav-right">
+      <div class="telemetry-ticker">
+        <span class="pulse-dot"></span>
+        <span id="nav-telemetry-status">HOST: LOCALHOST</span>
+        <span style="color: var(--border-subtle);">|</span>
+        <span id="nav-cpu-ticker" style="color: var(--text-ink); font-weight: 700;">CPU 0.0%</span>
+      </div>
+
+      <button class="btn-osd-primary" onclick="toggleLiveInstrument()">
+        <span>Launch Instrument</span>
+        <span>→</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =====================================================================
+       EDITORIAL LANDING EXPERIENCE
+       ===================================================================== -->
+  <main id="editorial-view">
+
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="tech-eyebrow">PC Health & Performance Intelligence // Rev 2.4</div>
+        <h1 class="hero-title">
+          Your PC has a story.<br>
+          <span class="lime-mark">Read the signals.</span>
+        </h1>
+        <p class="hero-subtext">
+          See what's using your resources, understand what's slowing your system down, and find your next best move.
+        </p>
+
+        <div class="hero-cta-group">
+          <button class="btn-osd-primary" onclick="toggleLiveInstrument()">
+            <span>Explore OSD Instrument</span>
+            <span>⚡</span>
+          </button>
+          <a href="#diagnostic-loop" class="btn-osd-secondary">
+            <span>See how it works</span>
+            <span>↓</span>
+          </a>
+        </div>
+
+        <div class="hero-specs-row">
+          <span class="spec-item">100% Offline Engine</span>
+          <span class="spec-item">Windows Native PSAPI</span>
+          <span class="spec-item">Zero Cloud Telemetry</span>
+          <span class="spec-item">Deterministic Heuristics</span>
+        </div>
+      </div>
+
+      <!-- Hero Instrument Console -->
+      <div class="instrument-rack">
+        <div class="rack-header">
+          <div class="rack-header-title">
+            <span class="pulse-dot"></span>
+            <span>OSD TELEMETRY CONSOLE // LOCALHOST:8080</span>
+          </div>
+          <div class="rack-screws">
+            <span></span><span></span>
+          </div>
+        </div>
+
+        <div class="rack-body">
+          <!-- Live Oscilloscope Trace -->
+          <div class="scope-box">
+            <div class="scope-header">
+              <span>HARDWARE SIGNAL TRACE (CPU & PHYSICAL MEMORY)</span>
+              <span id="scope-freq-readout">4,200 MHz</span>
+            </div>
+            <canvas id="hero-oscilloscope" class="oscilloscope"></canvas>
+          </div>
+
+          <!-- Dial + Meters -->
+          <div class="rack-grid">
+            <div class="rack-health-dial">
+              <span class="dial-label">Health Score</span>
+              <span class="dial-score" id="hero-health-score">--</span>
+              <span class="dial-status" id="hero-health-label">Analyzing...</span>
+            </div>
+
+            <div class="rack-telemetry-meters">
+              <div class="meter-row">
+                <span class="meter-label">CPU</span>
+                <div class="meter-track"><div class="meter-fill" id="hero-meter-cpu" style="width: 0%;"></div></div>
+                <span class="meter-val" id="hero-val-cpu">0.0%</span>
+              </div>
+              <div class="meter-row">
+                <span class="meter-label">RAM</span>
+                <div class="meter-track"><div class="meter-fill cyan" id="hero-meter-mem" style="width: 0%;"></div></div>
+                <span class="meter-val" id="hero-val-mem">0.0%</span>
+              </div>
+              <div class="meter-row">
+                <span class="meter-label">SWAP</span>
+                <div class="meter-track"><div class="meter-fill amber" id="hero-meter-swap" style="width: 0%;"></div></div>
+                <span class="meter-val" id="hero-val-swap">0.0%</span>
+              </div>
+              <div class="meter-row">
+                <span class="meter-label">DISK</span>
+                <div class="meter-track"><div class="meter-fill green" id="hero-meter-disk" style="width: 0%;"></div></div>
+                <span class="meter-val" id="hero-val-disk">0.0%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Finding -->
+          <div class="rack-diagnostic-strip">
+            <div class="strip-top">
+              <span class="strip-title" id="hero-diag-title">🔍 Diagnostic Bottleneck Finding</span>
+              <span class="badge-diagnostic healthy" id="hero-diag-badge">Healthy</span>
+            </div>
+            <div class="strip-desc" id="hero-diag-desc">Collecting system execution state...</div>
+            <div class="strip-action" id="hero-diag-action">Recommended Action: System running cleanly.</div>
+          </div>
+        </div>
+
+        <div class="rack-footer">
+          <span id="hero-top-proc">Top Consumer: Inspecting active threads...</span>
+          <button onclick="toggleLiveInstrument()" style="background: transparent; border: none; color: var(--accent-lime); font-family: var(--font-mono); font-size: 0.72rem; cursor: pointer; text-decoration: underline;">Open Full Scope →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: THE PROBLEM / THE FOG OF MODERN SYSTEMS -->
+    <section id="problem" class="section-editorial">
+      <div class="section-header-block">
+        <div class="tech-eyebrow">01 // The Problem</div>
+        <h2 class="section-headline">The Fog of Modern Systems.</h2>
+        <p class="section-desc">
+          Modern operating systems juggle hundreds of processes, multi-core scheduling, and complex memory paging. When your machine slows down, traditional task managers display a blizzard of raw numbers without context.
+        </p>
+      </div>
+
+      <div class="case-studies-grid">
+        <!-- Case 01 -->
+        <div class="case-card">
+          <div class="case-number">CASE FILE 01</div>
+          <h3 class="case-title">The Silent Thermal Throttle</h3>
+          <p class="case-quote">"Why is my PC hot and loud when I'm just reading an article?"</p>
+          <p class="case-reality">
+            Background update services and telemetry workers constantly schedule micro-bursts across high-performance CPU cores. Standard task managers miss them because average CPU usage looks low, but thermals spike.
+          </p>
+          <div class="case-solution">
+            OSD translates core frequency and sustained sample pressure into <span class="highlight">thermal-aware alert signals</span>.
+          </div>
+        </div>
+
+        <!-- Case 02 -->
+        <div class="case-card">
+          <div class="case-number">CASE FILE 02</div>
+          <h3 class="case-title">The Vanishing Memory Mystery</h3>
+          <p class="case-quote">"Where did 32 GB of RAM go? No single app shows more than 800 MB."</p>
+          <p class="case-reality">
+            Modern browser architectures split tabs across 40 isolated processes. Looking for "one big memory hog" fails because memory exhaustion is caused by distributed process proliferation.
+          </p>
+          <div class="case-solution">
+            OSD groups sibling instances into <span class="highlight">aggregate application footprints</span> and tracks swap memory thrashing.
+          </div>
+        </div>
+
+        <!-- Case 03 -->
+        <div class="case-card">
+          <div class="case-number">CASE FILE 03</div>
+          <h3 class="case-title">The Dangerous Guesswork</h3>
+          <p class="case-quote">"Can I terminate this process, or will Windows blue-screen?"</p>
+          <p class="case-reality">
+            Generic managers give you a raw "End Task" button with zero safety guidance. Users guess blindly, risking crashes or terminating critical background tasks.
+          </p>
+          <div class="case-solution">
+            OSD enforces <span class="highlight">kernel exclusion safeguards</span> protecting dwm.exe, lsass.exe, and system-critical drivers.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: DIAGNOSTIC LOOP (OBSERVE -> UNDERSTAND -> ACT -> VERIFY) -->
+    <section id="diagnostic-loop" class="section-loop">
+      <div class="section-loop-inner">
+        <div class="tech-eyebrow lime">02 // The Signature Methodology</div>
+        <h2 class="loop-headline">Observe. Understand. Act. Verify.</h2>
+        <p style="color: var(--text-light-dim); max-width: 620px; font-size: 1.05rem;">
+          How OSD turns raw OS telemetry into calm, decisive computer maintenance.
+        </p>
+
+        <div class="loop-grid">
+          <!-- Step 1 -->
+          <div class="loop-step">
+            <span class="loop-index">STAGE 01</span>
+            <h3 class="loop-title">Observe</h3>
+            <p class="loop-desc">
+              High-cadence hardware telemetry continuously samples CPU core saturation, memory allocations, pagefile swap pressure, disk I/O queues, and socket throughput.
+            </p>
+            <div class="loop-tech-specs">
+              • psutil native C-hooks<br>
+              • Windows PSAPI calls<br>
+              • Thread-independent timing
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="loop-step">
+            <span class="loop-index">STAGE 02</span>
+            <h3 class="loop-title">Understand</h3>
+            <p class="loop-desc">
+              Deterministic correlation engine filters out harmless compiler spikes while detecting authentic bottlenecks, runaway threads, and memory growth velocity.
+            </p>
+            <div class="loop-tech-specs">
+              • Weighted health scoring<br>
+              • Multi-sample windowing<br>
+              • Runway exhaustion models
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="loop-step">
+            <span class="loop-index">STAGE 03</span>
+            <h3 class="loop-title">Act</h3>
+            <p class="loop-desc">
+              Non-destructive recommendations provide clear next moves. When user approval is given, targeted memory trimming or process containment executes under strict protection rules.
+            </p>
+            <div class="loop-tech-specs">
+              • Kernel blacklist safeguards<br>
+              • Identity re-validation<br>
+              • Zero automatic guesswork
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="loop-step">
+            <span class="loop-index">STAGE 04</span>
+            <h3 class="loop-title">Verify</h3>
+            <p class="loop-desc">
+              Every corrective action is followed by differential telemetry auditing: measuring exact freed megabytes, CPU drop, and resulting health score gains recorded to SQLite WAL.
+            </p>
+            <div class="loop-tech-specs">
+              • Before/after differentials<br>
+              • SQLite persistent audit<br>
+              • Health score gain verification
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: PRODUCT SHOWCASE GALLERY (REAL SCREENSHOTS) -->
+    <section id="suite" class="section-showcase">
+      <div class="section-header-block">
+        <div class="tech-eyebrow">03 // The Desktop Suite</div>
+        <h2 class="section-headline">Designed for real machines.</h2>
+        <p class="section-desc">
+          Inspect the instruments built into the OSD native desktop suite and web companion.
+        </p>
+      </div>
+
+      <!-- View Selector Tabs -->
+      <div class="suite-nav-tabs">
+        <button class="suite-tab active" onclick="switchSuiteView('overview', this)">01. Overview Matrix</button>
+        <button class="suite-tab" onclick="switchSuiteView('processes', this)">02. Process Radar</button>
+        <button class="suite-tab" onclick="switchSuiteView('performance', this)">03. Performance Scopes</button>
+        <button class="suite-tab" onclick="switchSuiteView('diagnosis', this)">04. Bottleneck Diagnosis</button>
+        <button class="suite-tab" onclick="switchSuiteView('simulator', this)">05. What-If Simulator</button>
+        <button class="suite-tab" onclick="switchSuiteView('profiles', this)">06. Workload Profiles</button>
+        <button class="suite-tab" onclick="switchSuiteView('recovery', this)">07. Autonomous Recovery</button>
+        <button class="suite-tab" onclick="switchSuiteView('history', this)">08. SQLite History</button>
+      </div>
+
+      <!-- Showcase Display Box -->
+      <div class="suite-display-container">
+        <div class="suite-screen-wrapper">
+          <img id="suite-main-img" class="suite-screen-img" src="/app_previews/01_overview.png" alt="OSD Overview Matrix">
+        </div>
+
+        <div class="suite-screen-annotations">
+          <div class="tech-eyebrow lime" id="suite-ann-tag">VIEW 01 // OVERVIEW</div>
+          <h3 class="suite-ann-title" id="suite-ann-title">System Health Matrix</h3>
+          <p class="suite-ann-desc" id="suite-ann-desc">
+            Single-glance executive view combining weighted component scores (CPU, Memory, Swap, Disk) with live top consumers and active diagnostic bottlenecks.
+          </p>
+
+          <ul class="suite-ann-list" id="suite-ann-bullets">
+            <li>Weighted multi-factor score algorithm</li>
+            <li>Instant bottleneck categorization</li>
+            <li>Real-time CPU and Memory allocations</li>
+          </ul>
+
+          <div style="margin-top: auto; padding-top: 18px;">
+            <button class="btn-osd-dark" style="width: 100%; justify-content: center;" onclick="toggleLiveInstrument()">
+              <span>Launch Live Companion</span>
+              <span>↗</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: INTERACTIVE WHAT-IF SANDBOX -->
+    <section id="sandbox" class="section-sandbox">
+      <div class="sandbox-container">
+        <div class="section-header-block" style="margin-bottom: 32px;">
+          <div class="tech-eyebrow">04 // Interactive Sandbox</div>
+          <h2 class="section-headline">Test your next move safely.</h2>
+          <p class="section-desc">
+            The What-If Simulator allows you to model terminating background applications in an isolated sandbox. Calculate CPU relief and memory gains before making changes.
+          </p>
+        </div>
+
+        <div class="sandbox-panel">
+          <!-- Toolbar -->
+          <div class="sandbox-toolbar">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="tech-eyebrow" style="color: var(--text-ink);">SCENARIO ACTIONS:</span>
+              <button class="btn-osd-secondary" onclick="webSelectTop3()">⚡ Select Top 3 Hogs</button>
+              <button class="btn-osd-secondary" onclick="webSelectBrowsers()">🌐 Select Browser Tabs</button>
+              <button class="btn-osd-secondary" onclick="webClearAll()">🧹 Clear All</button>
+            </div>
+            <div class="mono" style="font-size: 0.78rem; color: var(--text-secondary);" id="web-sandbox-status-text">
+              0 apps selected for simulated relief
+            </div>
+          </div>
+
+          <!-- Live Metrics Grid -->
+          <div class="sandbox-metrics-grid">
+            <div class="sim-stat-box">
+              <div class="sim-stat-label">Simulated CPU</div>
+              <div class="sim-stat-num" id="web-sim-cpu">--%</div>
+              <div class="sim-stat-sub" id="web-sim-cpu-sub">Current Baseline: --%</div>
+            </div>
+
+            <div class="sim-stat-box">
+              <div class="sim-stat-label">Simulated RAM</div>
+              <div class="sim-stat-num" id="web-sim-ram">--%</div>
+              <div class="sim-stat-sub" id="web-sim-ram-sub">Current Baseline: --%</div>
+            </div>
+
+            <div class="sim-stat-box">
+              <div class="sim-stat-label">Reclaimed Memory</div>
+              <div class="sim-stat-num" id="web-sim-freed">0 MB</div>
+              <div class="sim-stat-sub" id="web-sim-freed-sub">0 applications selected</div>
+            </div>
+
+            <div class="sim-stat-box">
+              <div class="sim-stat-label">Projected Health</div>
+              <div class="sim-stat-num" id="web-sim-health">--/100</div>
+              <div class="sim-stat-sub" id="web-sim-health-sub">Gain: +0 pts</div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="sandbox-table-wrapper">
+            <table class="osd-table">
+              <thead>
+                <tr>
+                  <th style="width: 45px;">Select</th>
+                  <th>PID</th>
+                  <th>Process Name</th>
+                  <th>CPU %</th>
+                  <th>RAM (MB)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="web-sandbox-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading processes from local OSD engine...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: LOCAL ARCHITECTURE & PRIVACY -->
+    <section id="architecture" class="section-architecture">
+      <div class="section-header-block">
+        <div class="tech-eyebrow">05 // Architecture & Trust</div>
+        <h2 class="section-headline">Zero Telemetry. 100% Local.</h2>
+        <p class="section-desc">
+          OSD is designed on a simple principle: your operating system telemetry belongs solely to your machine. No accounts, no cloud endpoints, and no remote data exfiltration.
+        </p>
+      </div>
+
+      <div class="arch-grid">
+        <!-- Architecture Card -->
+        <div class="arch-card">
+          <div class="tech-eyebrow">Technical Stack</div>
+          <h3 class="display" style="font-size: 1.4rem; font-weight: 700;">Host Instrument Architecture</h3>
+          <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55;">
+            Built with CPython 3.12, Windows native PSAPI hooks, and Qt PySide6 for desktop rendering. The local web companion runs via Python's embedded socket server without external node runtimes.
+          </p>
+
+          <table class="arch-spec-table">
+            <tr>
+              <td class="label">Hardware Sampler</td>
+              <td>psutil 7.0 + Win32 PSAPI hooks</td>
+            </tr>
+            <tr>
+              <td class="label">Diagnostic Cadence</td>
+              <td>1.5s background thread (thread-isolated)</td>
+            </tr>
+            <tr>
+              <td class="label">Local Database</td>
+              <td>SQLite 3 with Write-Ahead Logging (WAL)</td>
+            </tr>
+            <tr>
+              <td class="label">Local Storage</td>
+              <td>~/.osense/osense.db</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Privacy & Protection Card -->
+        <div class="arch-card dark">
+          <div class="tech-eyebrow lime">Kernel Safety</div>
+          <h3 class="display" style="font-size: 1.4rem; font-weight: 700;">Protected Process Blacklist</h3>
+          <p style="font-size: 0.88rem; color: var(--text-light-dim); line-height: 1.55;">
+            OSD embeds hardcoded kernel guards. It is structurally impossible for automated or user-initiated actions to terminate Windows system-critical binaries.
+          </p>
+
+          <table class="arch-spec-table">
+            <tr>
+              <td class="label" style="color: var(--text-light-dim);">Protected Kernel</td>
+              <td style="color: var(--accent-lime);">System, ntoskrnl.exe, smss.exe, csrss.exe</td>
+            </tr>
+            <tr>
+              <td class="label" style="color: var(--text-light-dim);">Protected Services</td>
+              <td style="color: var(--accent-lime);">services.exe, lsass.exe, svchost.exe, dwm.exe</td>
+            </tr>
+            <tr>
+              <td class="label" style="color: var(--text-light-dim);">Security Services</td>
+              <td style="color: var(--accent-lime);">MsMpEng.exe, securityhealthservice.exe</td>
+            </tr>
+            <tr>
+              <td class="label" style="color: var(--text-light-dim);">Cloud Transmissions</td>
+              <td style="color: var(--signal-green);">0 bytes sent. Fully offline.</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: FINAL CTA -->
+    <section style="background: var(--bg-dark); color: var(--text-light); padding: 96px 48px; border-top: 1px solid var(--border-dark); text-align: center;">
+      <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 24px;">
+        <div class="tech-eyebrow lime">Know your machine</div>
+        <h2 class="display" style="font-size: 3.2rem; font-weight: 700; line-height: 1.1; letter-spacing: -0.03em;">
+          Understand your PC.<br>
+          <span style="color: var(--accent-lime);">Make your next move count.</span>
+        </h2>
+        <p style="color: var(--text-light-dim); font-size: 1.05rem; line-height: 1.55;">
+          Launch the live web companion directly in your browser or start the native desktop assistant.
+        </p>
+
+        <div style="display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px;">
+          <button class="btn-osd-primary" onclick="toggleLiveInstrument()">
+            <span>Open Live Dashboard</span>
+            <span>⚡</span>
+          </button>
+          <a href="#suite" class="btn-osd-dark">
+            <span>Explore Suite Views</span>
+            <span>→</span>
+          </a>
+        </div>
+
+        <div style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-light-dim); margin-top: 14px;">
+          Quick Start: <code style="background: #181B22; padding: 4px 8px; border-radius: 4px; color: var(--accent-lime);">.\run.bat</code> or <code style="background: #181B22; padding: 4px 8px; border-radius: 4px; color: var(--accent-lime);">python web_dashboard.py 8080</code>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =====================================================================
+       FULL INTEGRATED LIVE INSTRUMENT DASHBOARD
+       (Revealed smoothly when user clicks 'Launch Instrument')
+       ===================================================================== -->
+  <div id="live-instrument-drawer">
+    <div style="background: #0E1015; border-bottom: 1px solid var(--border-dark); padding: 12px 32px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="brand-reticle">⌖</span>
+        <span class="display" style="font-weight: 700; font-size: 1.1rem; color: var(--text-light);">OSD Live Telemetry Instrument</span>
+        <span class="mono" style="font-size: 0.72rem; color: var(--accent-lime); background: rgba(212,255,0,0.1); padding: 2px 8px; border-radius: 3px;">ONLINE // 1.5s CYCLE</span>
+      </div>
+      <button class="btn-osd-dark" onclick="toggleLiveInstrument()" style="padding: 6px 12px; font-size: 0.75rem;">
+        <span>✕ Return to Editorial Page</span>
+      </button>
+    </div>
+
+    <div class="live-dashboard-layout">
+      <!-- Live Sidebar -->
+      <aside class="live-sidebar">
+        <button class="live-nav-btn active" onclick="switchLivePage('overview', this)">📊 01. Overview</button>
+        <button class="live-nav-btn" onclick="switchLivePage('processes', this)">⚙️ 02. Processes</button>
+        <button class="live-nav-btn" onclick="switchLivePage('performance', this)">📈 03. Performance</button>
+        <button class="live-nav-btn" onclick="switchLivePage('diagnosis', this)">🔍 04. Diagnosis</button>
+        <button class="live-nav-btn" onclick="switchLivePage('predictive', this)">🔮 05. Predictive</button>
+        <button class="live-nav-btn" onclick="switchLivePage('recovery', this)">🛡️ 06. Recovery</button>
+        <button class="live-nav-btn" onclick="switchLivePage('assistant', this)">💬 07. Ask OSD</button>
+        <button class="live-nav-btn" onclick="switchLivePage('history', this)">⏳ 08. History</button>
+        <button class="live-nav-btn" onclick="switchLivePage('simulator', this)">🧪 09. Simulator</button>
+        <button class="live-nav-btn" onclick="switchLivePage('profiles', this)">🎯 10. Profiles</button>
+        <button class="live-nav-btn" onclick="switchLivePage('settings', this)">⚙ 11. Settings</button>
+      </aside>
+
+      <!-- Live Workspace -->
+      <section class="live-main">
+
+        <!-- LIVE PAGE 1: OVERVIEW -->
+        <div id="live-page-overview" class="dashboard-page active">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <div>
+              <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">System Health Overview</h2>
+              <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);" id="dash-live-status">Connecting to live hardware telemetry...</p>
+            </div>
+            <button class="btn-osd-primary" onclick="triggerDiagnosis()">🔍 Run Diagnosis Scan</button>
+          </div>
+
+          <!-- Top Health Score + Breakdown -->
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 24px; display: grid; grid-template-columns: 200px 1fr; gap: 32px; align-items: center;">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border-right: 1px solid var(--border-dark); padding-right: 24px;">
+              <span class="mono" style="font-size: 0.70rem; color: var(--text-light-dim); text-transform: uppercase;">Composite Score</span>
+              <span class="display" id="dash-health-score" style="font-size: 3.4rem; font-weight: 700; color: var(--accent-lime); line-height: 1; margin: 8px 0;">--</span>
+              <span class="mono" id="dash-health-label" style="font-size: 0.78rem; font-weight: 600; color: var(--signal-green);">Optimal</span>
+            </div>
+
+            <div>
+              <div class="mono" style="font-size: 0.75rem; color: var(--text-light-dim); margin-bottom: 12px; font-weight: 600;">SCORE BREAKDOWN (WEIGHTED)</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="meter-row">
+                  <span class="meter-label">CPU (30%)</span>
+                  <div class="meter-track"><div class="meter-fill" id="dash-bar-cpu" style="width: 100%;"></div></div>
+                  <span class="meter-val" id="dash-val-cpu">--</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">RAM (30%)</span>
+                  <div class="meter-track"><div class="meter-fill cyan" id="dash-bar-mem" style="width: 100%;"></div></div>
+                  <span class="meter-val" id="dash-val-mem">--</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">SWAP (15%)</span>
+                  <div class="meter-track"><div class="meter-fill amber" id="dash-bar-swap" style="width: 100%;"></div></div>
+                  <span class="meter-val" id="dash-val-swap">--</span>
+                </div>
+                <div class="meter-row">
+                  <span class="meter-label">DISK (25%)</span>
+                  <div class="meter-track"><div class="meter-fill green" id="dash-bar-disk" style="width: 100%;"></div></div>
+                  <span class="meter-val" id="dash-val-disk">--</span>
+                </div>
+              </div>
+              <div class="mono" id="dash-factors-list" style="font-size: 0.72rem; color: var(--text-light-dim); margin-top: 10px;"></div>
+            </div>
+          </div>
+
+          <!-- Quick Metric Grid -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 16px;">
+              <div class="mono" style="font-size: 0.70rem; color: var(--text-light-dim);">PROCESSOR (CPU)</div>
+              <div class="display" id="dash-card-cpu" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light); margin: 4px 0;">--%</div>
+              <div class="mono" id="dash-card-cpu-sub" style="font-size: 0.70rem; color: var(--text-light-dim);">-- cores</div>
+            </div>
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 16px;">
+              <div class="mono" style="font-size: 0.70rem; color: var(--text-light-dim);">PHYSICAL MEMORY</div>
+              <div class="display" id="dash-card-mem" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light); margin: 4px 0;">--%</div>
+              <div class="mono" id="dash-card-mem-sub" style="font-size: 0.70rem; color: var(--text-light-dim);">-- GB available</div>
+            </div>
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 16px;">
+              <div class="mono" style="font-size: 0.70rem; color: var(--text-light-dim);">STORAGE DRIVE</div>
+              <div class="display" id="dash-card-disk" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light); margin: 4px 0;">--%</div>
+              <div class="mono" id="dash-card-disk-sub" style="font-size: 0.70rem; color: var(--text-light-dim);">-- GB free</div>
+            </div>
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 16px;">
+              <div class="mono" style="font-size: 0.70rem; color: var(--text-light-dim);">NETWORK IO</div>
+              <div class="display" id="dash-card-net" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light); margin: 4px 0;">0 KB/s</div>
+              <div class="mono" id="dash-card-net-sub" style="font-size: 0.70rem; color: var(--text-light-dim);">↑ 0 KB/s  ↓ 0 KB/s</div>
+            </div>
+          </div>
+
+          <!-- Top Processes & Diagnostic Alerts -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px;">
+              <div class="display" style="font-weight: 700; font-size: 1.05rem; margin-bottom: 14px;">Top Resource Consumers</div>
+              <div id="dash-top-procs-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px;">
+              <div class="display" style="font-weight: 700; font-size: 1.05rem; margin-bottom: 14px;">Diagnostic Findings & Bottlenecks</div>
+              <div id="dash-alerts-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 2: PROCESSES -->
+        <div id="live-page-processes" class="dashboard-page">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <div>
+              <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Process Explorer</h2>
+              <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Active processes sorted by CPU and memory allocation</p>
+            </div>
+            <input type="text" id="dash-proc-search" placeholder="Filter by name or PID..." oninput="filterProcesses()" style="background: var(--bg-dark-card); border: 1px solid var(--border-dark-highlight); color: white; padding: 8px 14px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.78rem; width: 240px;">
+          </div>
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; overflow: hidden;">
+            <table class="osd-table" style="color: var(--text-light);">
+              <thead>
+                <tr>
+                  <th>PID</th>
+                  <th>Process Name</th>
+                  <th>CPU %</th>
+                  <th>RAM %</th>
+                  <th>Memory (MB)</th>
+                  <th>Status</th>
+                  <th>Threads</th>
+                </tr>
+              </thead>
+              <tbody id="dash-processes-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 3: PERFORMANCE -->
+        <div id="live-page-performance" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Performance Telemetry Scopes</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Historical utilization timelines sampled every 1.5s</p>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px;">
+              <div class="mono" style="font-size: 0.75rem; color: var(--text-light-dim); margin-bottom: 8px;">CPU UTILIZATION SCOPE</div>
+              <canvas id="chart-cpu" style="width: 100%; height: 180px;"></canvas>
+            </div>
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px;">
+              <div class="mono" style="font-size: 0.75rem; color: var(--text-light-dim); margin-bottom: 8px;">PHYSICAL MEMORY SCOPE</div>
+              <canvas id="chart-mem" style="width: 100%; height: 180px;"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 4: DIAGNOSIS -->
+        <div id="live-page-diagnosis" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Root-Cause Bottleneck Diagnosis</h2>
+              <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Deterministic heuristic analysis correlating metrics to identify root performance drags</p>
+            </div>
+            <button class="btn-osd-primary" onclick="triggerDiagnosis()">🔍 Re-Run Scan</button>
+          </div>
+          <div id="diag-results" style="display: flex; flex-direction: column; gap: 14px;"></div>
+        </div>
+
+        <!-- LIVE PAGE 5: PREDICTIVE ALERTS -->
+        <div id="live-page-predictive" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Predictive Runway Warnings</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Trend analysis estimating resource exhaustion minutes before system freezes</p>
+          </div>
+          <div id="predictive-alerts-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
+        </div>
+
+        <!-- LIVE PAGE 6: RECOVERY ADVISOR -->
+        <div id="live-page-recovery" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Autonomous Recovery Advisor</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Validated corrective action plans with pre-flight safety verification and post-action audit logging</p>
+          </div>
+          <div id="recovery-plans-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px; margin-top: 20px;">
+            <div class="display" style="font-weight: 700; font-size: 1.05rem; margin-bottom: 12px;">SQLite Outcome Audit Log</div>
+            <div class="mono" id="recovery-audit-log" style="font-size: 0.78rem; color: var(--text-light-dim); line-height: 1.6;">No actions executed yet during this session.</div>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 7: ASK OSD AI -->
+        <div id="live-page-assistant" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">Ask OSD — 100% Offline AI Assistant</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Local deterministic NLP rule engine diagnosing your system without external cloud API calls</p>
+          </div>
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 20px; display: flex; flex-direction: column; height: 500px;">
+            <div id="chat-messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; padding-right: 8px;">
+              <div style="background: var(--bg-dark-elevated); border: 1px solid var(--border-dark); border-radius: 6px; padding: 14px; font-size: 0.85rem; line-height: 1.5; color: var(--text-light); max-width: 80%;">
+                <b>OSD Assistant:</b><br>
+                Welcome. I have direct local access to your live telemetry and process tables. Ask me anything about your current system status.
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+              <span class="mono" style="background: var(--bg-dark-elevated); border: 1px solid var(--border-dark); color: var(--accent-lime); padding: 4px 10px; border-radius: 14px; font-size: 0.72rem; cursor: pointer;" onclick="sendPrompt('How is my PC health right now?')">"How is my PC health right now?"</span>
+              <span class="mono" style="background: var(--bg-dark-elevated); border: 1px solid var(--border-dark); color: var(--accent-lime); padding: 4px 10px; border-radius: 14px; font-size: 0.72rem; cursor: pointer;" onclick="sendPrompt('Why is memory usage elevated?')">"Why is memory usage elevated?"</span>
+              <span class="mono" style="background: var(--bg-dark-elevated); border: 1px solid var(--border-dark); color: var(--accent-lime); padding: 4px 10px; border-radius: 14px; font-size: 0.72rem; cursor: pointer;" onclick="sendPrompt('Which processes are safe to close?')">"Which processes are safe to close?"</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <input type="text" id="chat-input" placeholder="Ask a question about your system performance..." onkeydown="if(event.key==='Enter')sendChatMessage()" style="flex: 1; background: #0A0B0E; border: 1px solid var(--border-dark-highlight); color: white; padding: 10px 16px; border-radius: 4px; font-family: var(--font-body); font-size: 0.85rem;">
+              <button class="btn-osd-primary" onclick="sendChatMessage()">Send</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 8: HISTORY -->
+        <div id="live-page-history" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">SQLite Telemetry Timeline</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Historical performance snapshots persisted to ~/.osense/osense.db</p>
+          </div>
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; overflow: hidden;">
+            <table class="osd-table" style="color: var(--text-light);">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Health Score</th>
+                  <th>CPU %</th>
+                  <th>RAM %</th>
+                  <th>Swap %</th>
+                  <th>Disk %</th>
+                  <th>Process Count</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 9: SIMULATOR -->
+        <div id="live-page-simulator" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">🧪 What-If Resource Simulator</h2>
+              <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Sandboxed resource impact estimation — select processes below to simulate gains safely</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-osd-secondary" onclick="simulateSelectTop3()">⚡ Top 3 Hogs</button>
+              <button class="btn-osd-secondary" onclick="simulateSelectBrowsers()">🌐 Browsers</button>
+              <button class="btn-osd-secondary" onclick="simulateClearAll()">🧹 Clear All</button>
+              <button class="btn-osd-primary" onclick="recalculateSimulation()">🔄 Re-Simulate</button>
+            </div>
+          </div>
+
+          <div class="sandbox-metrics-grid">
+            <div class="sim-stat-box" style="background: var(--bg-dark-card); border-color: var(--border-dark);">
+              <div class="sim-stat-label" style="color: var(--text-light-dim);">Simulated CPU</div>
+              <div class="sim-stat-num" id="sim-cpu" style="color: var(--text-light);">--%</div>
+              <div class="sim-stat-sub" id="sim-cpu-sub" style="color: var(--text-light-dim);">Baseline: --%</div>
+            </div>
+            <div class="sim-stat-box" style="background: var(--bg-dark-card); border-color: var(--border-dark);">
+              <div class="sim-stat-label" style="color: var(--text-light-dim);">Simulated RAM</div>
+              <div class="sim-stat-num" id="sim-ram" style="color: var(--text-light);">--%</div>
+              <div class="sim-stat-sub" id="sim-ram-sub" style="color: var(--text-light-dim);">Baseline: --%</div>
+            </div>
+            <div class="sim-stat-box" style="background: var(--bg-dark-card); border-color: var(--border-dark);">
+              <div class="sim-stat-label" style="color: var(--text-light-dim);">Reclaimed RAM</div>
+              <div class="sim-stat-num" id="sim-freed" style="color: var(--accent-lime);">0 MB</div>
+              <div class="sim-stat-sub" id="sim-freed-sub" style="color: var(--text-light-dim);">0 processes selected</div>
+            </div>
+            <div class="sim-stat-box" style="background: var(--bg-dark-card); border-color: var(--border-dark);">
+              <div class="sim-stat-label" style="color: var(--text-light-dim);">Simulated Health</div>
+              <div class="sim-stat-num" id="sim-health" style="color: var(--text-light);">--/100</div>
+              <div class="sim-stat-sub" id="sim-health-sub" style="color: var(--text-light-dim);">Gain: +0 pts</div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; overflow: hidden;">
+            <table class="osd-table" style="color: var(--text-light);">
+              <thead>
+                <tr>
+                  <th style="width: 45px;">Select</th>
+                  <th>PID</th>
+                  <th>Process Name</th>
+                  <th>CPU %</th>
+                  <th>RAM (MB)</th>
+                </tr>
+              </thead>
+              <tbody id="simulator-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LIVE PAGE 10: PROFILES -->
+        <div id="live-page-profiles" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">🎯 Workload Sensitivity Profiles</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Dynamically adapt monitoring cadence and alert thresholds to match your current task</p>
+          </div>
+          <div id="profiles-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;"></div>
+        </div>
+
+        <!-- LIVE PAGE 11: SETTINGS -->
+        <div id="live-page-settings" class="dashboard-page">
+          <div style="border-bottom: 1px solid var(--border-dark); padding-bottom: 16px;">
+            <h2 class="display" style="font-size: 1.8rem; font-weight: 700; color: var(--text-light);">OSD System Specifications</h2>
+            <p class="mono" style="font-size: 0.78rem; color: var(--text-light-dim);">Host engine configuration and diagnostic parameters</p>
+          </div>
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 24px;">
+            <table class="arch-spec-table">
+              <tr>
+                <td class="label" style="color: var(--text-light-dim);">Software Engine</td>
+                <td style="color: var(--text-light);">OSD (Operating System Diagnostics) v2.4 Pro</td>
+              </tr>
+              <tr>
+                <td class="label" style="color: var(--text-light-dim);">Telemetry Provider</td>
+                <td style="color: var(--text-light);">psutil 7.0 + Windows Native PSAPI</td>
+              </tr>
+              <tr>
+                <td class="label" style="color: var(--text-light-dim);">Database Engine</td>
+                <td style="color: var(--text-light);">SQLite 3 in WAL Mode (~/.osense/osense.db)</td>
+              </tr>
+              <tr>
+                <td class="label" style="color: var(--text-light-dim);">AI/Assistant Engine</td>
+                <td style="color: var(--accent-lime);">100% Offline Rule-Based NLP (Zero External Telemetry)</td>
+              </tr>
+              <tr>
+                <td class="label" style="color: var(--text-light-dim);">GUI Desktop Stack</td>
+                <td style="color: var(--text-light);">PySide6-Essentials (Qt 6.8) Native Application</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       GLOBAL FOOTER
+       ===================================================================== -->
+  <footer class="osd-footer">
+    <div class="footer-grid">
+      <div>
+        <div class="brand-group" style="margin-bottom: 14px;">
+          <span class="brand-mark" style="color: var(--text-light);">
+            <span class="brand-reticle">⌖</span> OSD
+          </span>
+        </div>
+        <p style="font-size: 0.88rem; color: var(--text-light-dim); line-height: 1.6; max-width: 320px;">
+          Operating System Performance Intelligence. Built for power users, developers, and computer owners who want clarity instead of noise.
+        </p>
+      </div>
+
+      <div>
+        <div class="mono" style="font-size: 0.75rem; color: var(--text-light); font-weight: 700; margin-bottom: 14px;">NAVIGATION</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: var(--text-light-dim);">
+          <a href="#problem">The Problem</a>
+          <a href="#diagnostic-loop">Diagnostic Loop</a>
+          <a href="#suite">Product Suite</a>
+          <a href="#sandbox">What-If Sandbox</a>
+          <a href="#architecture">Architecture</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="mono" style="font-size: 0.75rem; color: var(--text-light); font-weight: 700; margin-bottom: 14px;">INSTRUMENT</div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.82rem; color: var(--text-light-dim);">
+          <a href="javascript:void(0)" onclick="toggleLiveInstrument()">Live Dashboard</a>
+          <a href="javascript:void(0)" onclick="toggleLiveInstrument(); switchLivePage('diagnosis')">Root-Cause Scan</a>
+          <a href="javascript:void(0)" onclick="toggleLiveInstrument(); switchLivePage('simulator')">Resource Simulator</a>
+          <a href="javascript:void(0)" onclick="toggleLiveInstrument(); switchLivePage('profiles')">Workload Profiles</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="mono" style="font-size: 0.75rem; color: var(--text-light); font-weight: 700; margin-bottom: 14px;">ENGINE SPECS</div>
+        <div class="mono" style="font-size: 0.75rem; color: var(--text-light-dim); line-height: 1.8;">
+          • Host: Windows 11 Native<br>
+          • DB: SQLite WAL Mode<br>
+          • Engine: 100% Offline<br>
+          • Revision: 2.4-PRO
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>© 2026 OSD Software. Know your machine.</div>
+      <div>Local-First System Telemetry • Zero External Tracking</div>
+    </div>
+  </footer>
+
+  <!-- =====================================================================
+       CLIENT JAVASCRIPT LOGIC & TELEMETRY BINDINGS
+       ===================================================================== */ -->
+  <script>
+    let allProcesses = [];
+    const cpuHistory = [];
+    const memHistory = [];
+    let isLiveInstrumentOpen = false;
+
+    // Mode Toggle (Editorial vs Live Instrument)
+    function toggleLiveInstrument() {
+      const drawer = document.getElementById('live-instrument-drawer');
+      const editorial = document.getElementById('editorial-view');
+      isLiveInstrumentOpen = !isLiveInstrumentOpen;
+      
+      if (isLiveInstrumentOpen) {
+        drawer.classList.add('active');
+        editorial.style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        fetchProcesses();
+        fetchMetrics();
+      } else {
+        drawer.classList.remove('active');
+        editorial.style.display = 'block';
+      }
+    }
+
+    function switchLivePage(pageId, btn) {
+      document.querySelectorAll('.dashboard-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.live-nav-btn').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById('live-page-' + pageId);
+      if (target) target.classList.add('active');
+      if (btn) btn.classList.add('active');
+
+      if (pageId === 'predictive') loadPredictiveAlerts();
+      if (pageId === 'recovery') loadRecoveryPlans();
+      if (pageId === 'history') loadHistory();
+      if (pageId === 'simulator') loadSimulatorTable();
+      if (pageId === 'profiles') loadProfiles();
+    }
+
+    // Suite showcase view switcher
+    const suiteData = {
+      overview: {
+        tag: 'VIEW 01 // OVERVIEW',
+        title: 'System Health Matrix',
+        desc: 'Single-glance executive view combining weighted component scores (CPU, Memory, Swap, Disk) with live top consumers and active diagnostic bottlenecks.',
+        img: '/app_previews/01_overview.png',
+        bullets: ['Weighted multi-factor score algorithm', 'Instant bottleneck categorization', 'Real-time CPU and Memory allocations']
+      },
+      processes: {
+        tag: 'VIEW 02 // EXPLORER',
+        title: 'Process Radar Explorer',
+        desc: 'High-speed inspection grid sorted by live CPU consumption, physical RSS memory allocations, thread counts, and process status with instant filtering.',
+        img: '/app_previews/02_processes.png',
+        bullets: ['Instant text and PID filtering', 'Sub-millisecond sorting cadence', 'Process status and thread accounting']
+      },
+      performance: {
+        tag: 'VIEW 03 // PERFORMANCE',
+        title: 'Performance Timelines',
+        desc: 'Precision time-series graphing tracking sustained CPU load and physical memory consumption across continuous 60-second telemetry windows.',
+        img: '/app_previews/03_performance.png',
+        bullets: ['Time-series buffer visualization', 'Core saturation detection', 'Peak and baseline trend markers']
+      },
+      diagnosis: {
+        tag: 'VIEW 04 // DIAGNOSIS',
+        title: 'Root-Cause Bottleneck Engine',
+        desc: 'Deterministic diagnostic scanner analyzing telemetry signals to uncover why system performance is degrading and recommending verified actions.',
+        img: '/app_previews/04_diagnosis.png',
+        bullets: ['Severity levels: Healthy, Warning, Critical', 'Evidence strength and probable cause deduction', 'Context-aware corrective suggestions']
+      },
+      simulator: {
+        tag: 'VIEW 05 // SANDBOX',
+        title: 'What-If Resource Simulator',
+        desc: 'Interactive sandbox allowing users to model the exact CPU reduction and memory reclamation of terminating applications before touching live processes.',
+        img: '/app_previews/07_intelligence_simulator.png',
+        bullets: ['Simulated CPU and RAM recalculations', 'Health score recovery estimation', 'Swap paging relief prediction']
+      },
+      profiles: {
+        tag: 'VIEW 06 // ADAPTIVE',
+        title: 'Workload Sensitivity Presets',
+        desc: 'Adaptive threshold presets for Coding, Gaming, Quiet Study, and Battery Saver that tune alert sensitivity and sampling intervals to current tasks.',
+        img: '/app_previews/08_intelligence_profiles.png',
+        bullets: ['5 specialized tuning profiles', 'Dynamic warning threshold adaptation', 'Battery power-saving cadence tuning']
+      },
+      recovery: {
+        tag: 'VIEW 07 // RECOVERY',
+        title: 'Autonomous Recovery Advisor',
+        desc: 'Pre-flight verified action execution with hardcoded Windows kernel protection and automated post-action outcome auditing in local SQLite storage.',
+        img: '/app_previews/09_recovery.png',
+        bullets: ['Kernel exclusion safeguards', 'Identity revalidation', 'SQLite differential outcome audit']
+      },
+      history: {
+        tag: 'VIEW 08 // TIMELINE',
+        title: 'SQLite Telemetry Timeline',
+        desc: 'Persistent historical log of system health scores, hardware metrics, and process counts stored locally in WAL mode for long-term trend analysis.',
+        img: '/app_previews/10_history.png',
+        bullets: ['~/.osense/osense.db WAL storage', 'Long-term trend analysis', 'Zero external telemetry transfer']
+      }
+    };
+
+    function switchSuiteView(key, btn) {
+      document.querySelectorAll('.suite-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      const item = suiteData[key];
+      if (!item) return;
+      document.getElementById('suite-ann-tag').innerText = item.tag;
+      document.getElementById('suite-ann-title').innerText = item.title;
+      document.getElementById('suite-ann-desc').innerText = item.desc;
+      document.getElementById('suite-main-img').src = item.img;
+      document.getElementById('suite-ann-bullets').innerHTML = item.bullets.map(b => `<li>${b}</li>`).join('');
+    }
+
+    // Oscilloscope Animation
+    function drawOscilloscope(cpuVal, memVal) {
+      const canvas = document.getElementById('hero-oscilloscope');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width = canvas.parentElement.clientWidth - 28;
+      const h = canvas.height = 90;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 30) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 20) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // Draw CPU Waveform (Lime)
+      ctx.beginPath();
+      ctx.strokeStyle = '#D4FF00';
+      ctx.lineWidth = 2;
+      const now = Date.now() / 300;
+      for (let x = 0; x < w; x++) {
+        const norm = (cpuVal / 100);
+        const wave = Math.sin(now + x * 0.05) * 12 * norm + Math.cos(now * 1.5 + x * 0.08) * 8 * norm;
+        const y = h * 0.65 - (norm * (h * 0.45)) + wave;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Draw Memory Line (Cyan)
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.6)';
+      ctx.lineWidth = 1.5;
+      const memY = h - (memVal / 100) * (h * 0.75) - 6;
+      ctx.moveTo(0, memY);
+      ctx.lineTo(w, memY);
+      ctx.stroke();
+    }
+
+    // Fetch and Bind Live Metrics
+    async function fetchMetrics() {
+      try {
+        const res = await fetch('/api/metrics');
+        const data = await res.json();
+        renderHeroConsole(data);
+        renderLiveOverview(data);
+        renderSparklines(data);
+      } catch (e) {
+        console.warn('Live telemetry polling:', e);
+      }
+    }
+
+    function renderHeroConsole(data) {
+      const snap = data.snapshot;
+      const hs = data.health;
+
+      // Nav ticker
+      document.getElementById('nav-cpu-ticker').innerText = 'CPU ' + snap.cpu_percent.toFixed(1) + '%';
+
+      // Hero rack metrics
+      const scoreNum = document.getElementById('hero-health-score');
+      scoreNum.innerText = Math.round(hs.total_score);
+      scoreNum.style.color = hs.total_score >= 80 ? 'var(--accent-lime)' : (hs.total_score >= 60 ? 'var(--signal-amber)' : 'var(--signal-red)');
+
+      const labelEl = document.getElementById('hero-health-label');
+      labelEl.innerText = hs.total_score >= 80 ? 'Optimal' : (hs.total_score >= 60 ? 'Moderate Load' : 'High Contention');
+      labelEl.style.color = hs.total_score >= 80 ? 'var(--signal-green)' : (hs.total_score >= 60 ? 'var(--signal-amber)' : 'var(--signal-red)');
+
+      document.getElementById('hero-meter-cpu').style.width = Math.min(100, Math.max(0, snap.cpu_percent)) + '%';
+      document.getElementById('hero-val-cpu').innerText = snap.cpu_percent.toFixed(1) + '%';
+
+      document.getElementById('hero-meter-mem').style.width = Math.min(100, Math.max(0, snap.memory_percent)) + '%';
+      document.getElementById('hero-val-mem').innerText = snap.memory_percent.toFixed(1) + '%';
+
+      document.getElementById('hero-meter-swap').style.width = Math.min(100, Math.max(0, snap.swap_percent)) + '%';
+      document.getElementById('hero-val-swap').innerText = snap.swap_percent.toFixed(1) + '%';
+
+      document.getElementById('hero-meter-disk').style.width = Math.min(100, Math.max(0, snap.disk_percent)) + '%';
+      document.getElementById('hero-val-disk').innerText = snap.disk_percent.toFixed(1) + '%';
+
+      document.getElementById('scope-freq-readout').innerText = Math.round(snap.frequency_mhz) + ' MHz • ' + snap.logical_cores + ' CORES';
+
+      // Top process
+      const topP = (data.top_processes || [])[0];
+      if (topP) {
+        document.getElementById('hero-top-proc').innerHTML = `Top Consumer: <b>${topP.name}</b> (PID ${topP.pid}) — <span style="color:var(--accent-lime);">${topP.cpu.toFixed(1)}% CPU</span> • <span style="color:var(--signal-cyan);">${Math.round(topP.memory_mb)} MB</span>`;
+      }
+
+      // Diagnostic callout
+      const diags = (data.diagnoses || []).filter(d => d.severity !== 'Healthy');
+      if (diags.length > 0) {
+        const d = diags[0];
+        document.getElementById('hero-diag-title').innerText = d.title;
+        document.getElementById('hero-diag-badge').innerText = d.severity;
+        document.getElementById('hero-diag-badge').className = 'badge-diagnostic ' + d.severity.toLowerCase();
+        document.getElementById('hero-diag-desc').innerText = d.evidence + ' // Probable Cause: ' + d.probable_cause;
+        document.getElementById('hero-diag-action').innerText = 'Recommended: ' + d.recommendation;
+      } else {
+        document.getElementById('hero-diag-title').innerText = 'System State: Clean & Nominal';
+        document.getElementById('hero-diag-badge').innerText = 'Optimal';
+        document.getElementById('hero-diag-badge').className = 'badge-diagnostic healthy';
+        document.getElementById('hero-diag-desc').innerText = 'All monitored hardware metrics are operating well within normal thresholds.';
+        document.getElementById('hero-diag-action').innerText = 'Recommended: No corrective action required.';
+      }
+
+      drawOscilloscope(snap.cpu_percent, snap.memory_percent);
+    }
+
+    function renderLiveOverview(data) {
+      const snap = data.snapshot;
+      const hs = data.health;
+
+      document.getElementById('dash-live-status').innerText = 'Telemetry Active: ' + new Date().toLocaleTimeString() + ' • ' + snap.platform;
+      
+      const score = document.getElementById('dash-health-score');
+      score.innerText = Math.round(hs.total_score);
+      score.style.color = hs.total_score >= 80 ? 'var(--accent-lime)' : (hs.total_score >= 60 ? 'var(--signal-amber)' : 'var(--signal-red)');
+
+      document.getElementById('dash-health-label').innerText = hs.total_score >= 80 ? 'Optimal Performance' : (hs.total_score >= 60 ? 'Moderate Contention' : 'High Pressure');
+
+      document.getElementById('dash-bar-cpu').style.width = hs.cpu_score + '%';
+      document.getElementById('dash-val-cpu').innerText = Math.round(hs.cpu_score);
+
+      document.getElementById('dash-bar-mem').style.width = hs.memory_score + '%';
+      document.getElementById('dash-val-mem').innerText = Math.round(hs.memory_score);
+
+      document.getElementById('dash-bar-swap').style.width = hs.swap_score + '%';
+      document.getElementById('dash-val-swap').innerText = Math.round(hs.swap_score);
+
+      document.getElementById('dash-bar-disk').style.width = hs.disk_score + '%';
+      document.getElementById('dash-val-disk').innerText = Math.round(hs.disk_score);
+
+      document.getElementById('dash-factors-list').innerHTML = hs.factors.map(f => '• ' + f).join('<br>') || '• All components operating within normal ranges.';
+
+      document.getElementById('dash-card-cpu').innerText = snap.cpu_percent.toFixed(1) + '%';
+      document.getElementById('dash-card-cpu-sub').innerText = snap.logical_cores + ' logical cores • ' + Math.round(snap.frequency_mhz) + ' MHz';
+
+      document.getElementById('dash-card-mem').innerText = snap.memory_percent.toFixed(1) + '%';
+      document.getElementById('dash-card-mem-sub').innerText = snap.memory_used_gb.toFixed(1) + ' / ' + snap.memory_total_gb.toFixed(1) + ' GB';
+
+      document.getElementById('dash-card-disk').innerText = snap.disk_percent.toFixed(1) + '%';
+      document.getElementById('dash-card-disk-sub').innerText = snap.disk_free_gb.toFixed(1) + ' GB free space';
+
+      document.getElementById('dash-card-net').innerText = snap.net_down_speed;
+      document.getElementById('dash-card-net-sub').innerText = '↑ ' + snap.net_up_speed + '   ↓ ' + snap.net_down_speed;
+
+      // Top Processes
+      const procsList = document.getElementById('dash-top-procs-list');
+      procsList.innerHTML = (data.top_processes || []).slice(0, 5).map(p => `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; font-family: var(--font-mono); font-size: 0.78rem;">
+          <span style="font-weight: 600; color: var(--text-light);">${p.name} (PID ${p.pid})</span>
+          <div>
+            <span style="color: var(--accent-lime); margin-right: 10px;">${p.cpu.toFixed(1)}% CPU</span>
+            <span style="color: var(--signal-cyan);">${Math.round(p.memory_mb)} MB</span>
+          </div>
+        </div>
+      `).join('');
+
+      // Diagnostic alerts
+      const alerts = (data.diagnoses || []).filter(d => d.severity !== 'Healthy');
+      const alertsList = document.getElementById('dash-alerts-list');
+      if (alerts.length === 0) {
+        alertsList.innerHTML = '<div style="color: var(--signal-green); font-family: var(--font-mono); font-size: 0.8rem;">✅ No active diagnostic bottlenecks detected.</div>';
+      } else {
+        alertsList.innerHTML = alerts.map(a => `
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 6px; font-size: 0.82rem;">
+            <span style="color: var(--text-light); font-weight: 500;">${a.title}</span>
+            <span class="badge-diagnostic ${a.severity.toLowerCase()}">${a.severity}</span>
+          </div>
+        `).join('');
+      }
+
+      renderDiagnosis(data.diagnoses);
+    }
+
+    function renderSparklines(data) {
+      const snap = data.snapshot;
+      cpuHistory.push(snap.cpu_percent);
+      if (cpuHistory.length > 30) cpuHistory.shift();
+      memHistory.push(snap.memory_percent);
+      if (memHistory.length > 30) memHistory.shift();
+
+      drawSparkline('chart-cpu', cpuHistory, '#D4FF00');
+      drawSparkline('chart-mem', memHistory, '#22D3EE');
+    }
+
+    function drawSparkline(canvasId, values, color) {
+      const c = document.getElementById(canvasId);
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      const w = c.width = c.parentElement.clientWidth - 40;
+      const h = c.height = 180;
+      ctx.clearRect(0, 0, w, h);
+      if (values.length < 2) return;
+
+      // Draw Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let y = 0; y < h; y += 30) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      const step = w / (values.length - 1);
+      values.forEach((v, i) => {
+        const y = h - (v / 100) * (h * 0.85) - 10;
+        if (i === 0) ctx.moveTo(0, y);
+        else ctx.lineTo(i * step, y);
+      });
+      ctx.stroke();
+
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = color + '18';
+      ctx.fill();
+    }
+
+    function renderDiagnosis(diags) {
+      const container = document.getElementById('diag-results');
+      if (!container) return;
+      if (!diags || diags.length === 0) {
+        container.innerHTML = '<div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); padding: 24px; text-align: center; color: var(--signal-green);">✅ System operating nominal. No bottlenecks detected.</div>';
+        return;
+      }
+      container.innerHTML = diags.map(d => `
+        <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-left: 4px solid ${d.severity === 'Critical' ? 'var(--signal-red)' : (d.severity === 'Warning' ? 'var(--signal-amber)' : 'var(--signal-green)')}; border-radius: 4px; padding: 18px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="display" style="font-weight: 700; font-size: 1.05rem; color: var(--text-light);">${d.title}</span>
+            <span class="badge-diagnostic ${d.severity.toLowerCase()}">${d.severity}</span>
+          </div>
+          <div style="font-size: 0.82rem; color: var(--text-light-dim);"><b>Evidence:</b> ${d.evidence}</div>
+          <div style="font-size: 0.82rem; color: var(--signal-cyan);"><b>Probable Cause:</b> ${d.probable_cause}</div>
+          <div style="font-size: 0.82rem; color: var(--accent-lime);"><b>Recommended:</b> ${d.recommendation}</div>
+        </div>
+      `).join('');
+    }
+
+    // Fetch and bind process list
+    async function fetchProcesses() {
+      try {
+        const res = await fetch('/api/processes');
+        allProcesses = await res.json();
+        renderProcessTable(allProcesses);
+        renderWebSandboxTable(allProcesses);
+      } catch (e) {
+        console.warn('Process fetch:', e);
+      }
+    }
+
+    function renderProcessTable(procs) {
+      const tbody = document.getElementById('dash-processes-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = procs.slice(0, 100).map(p => `
+        <tr>
+          <td class="mono" style="color: var(--text-light-dim);">${p.pid}</td>
+          <td style="font-weight: 600; color: var(--text-light);">${p.name}</td>
+          <td class="mono" style="color: ${p.cpu > 5 ? 'var(--accent-lime)' : 'var(--text-light)'}; font-weight: ${p.cpu > 5 ? '700' : 'normal'};">${p.cpu.toFixed(1)}%</td>
+          <td class="mono">${p.memory_percent.toFixed(1)}%</td>
+          <td class="mono">${Math.round(p.memory_mb)} MB</td>
+          <td><span style="font-size: 0.72rem; color: var(--text-light-dim);">${p.status}</span></td>
+          <td class="mono">${p.threads}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterProcesses() {
+      const q = document.getElementById('dash-proc-search').value.toLowerCase();
+      const filtered = allProcesses.filter(p => p.name.toLowerCase().includes(q) || String(p.pid).includes(q));
+      renderProcessTable(filtered);
+    }
+
+    // Web Sandbox Simulator Table
+    function renderWebSandboxTable(procs) {
+      const tbody = document.getElementById('web-sandbox-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = procs.slice(0, 40).map(p => `
+        <tr id="web-sim-row-${p.pid}">
+          <td><input type="checkbox" class="web-sim-chk" value="${p.pid}" data-name="${p.name}" onchange="onWebSimCheckChange(${p.pid})"></td>
+          <td class="mono" style="color: var(--text-secondary);">${p.pid}</td>
+          <td style="font-weight: 600;">${p.name}</td>
+          <td class="mono" style="color: ${p.cpu > 5 ? 'var(--signal-red)' : 'var(--text-ink)'}; font-weight: ${p.cpu > 5 ? '700' : 'normal'};">${p.cpu.toFixed(1)}%</td>
+          <td class="mono">${Math.round(p.memory_mb)} MB</td>
+          <td style="font-size: 0.75rem; color: var(--text-secondary);">${p.status}</td>
+        </tr>
+      `).join('');
+      recalculateWebSimulation();
+    }
+
+    function onWebSimCheckChange(pid) {
+      const chk = document.querySelector(`.web-sim-chk[value="${pid}"]`);
+      const row = document.getElementById('web-sim-row-' + pid);
+      if (chk && row) {
+        row.style.background = chk.checked ? 'rgba(212, 255, 0, 0.15)' : '';
+      }
+      recalculateWebSimulation();
+    }
+
+    function webSelectTop3() {
+      webClearAll();
+      const chks = document.querySelectorAll('.web-sim-chk');
+      for (let i = 0; i < Math.min(3, chks.length); i++) {
+        chks[i].checked = true;
+        const row = document.getElementById('web-sim-row-' + chks[i].value);
+        if (row) row.style.background = 'rgba(212, 255, 0, 0.15)';
+      }
+      recalculateWebSimulation();
+    }
+
+    function webSelectBrowsers() {
+      webClearAll();
+      const browserKeywords = ['chrome', 'msedge', 'edge', 'firefox', 'brave', 'opera'];
+      document.querySelectorAll('.web-sim-chk').forEach(chk => {
+        const name = (chk.getAttribute('data-name') || '').toLowerCase();
+        if (browserKeywords.some(b => name.includes(b))) {
+          chk.checked = true;
+          const row = document.getElementById('web-sim-row-' + chk.value);
+          if (row) row.style.background = 'rgba(212, 255, 0, 0.15)';
+        }
+      });
+      recalculateWebSimulation();
+    }
+
+    function webClearAll() {
+      document.querySelectorAll('.web-sim-chk').forEach(chk => {
+        chk.checked = false;
+        const row = document.getElementById('web-sim-row-' + chk.value);
+        if (row) row.style.background = '';
+      });
+      recalculateWebSimulation();
+    }
+
+    async function recalculateWebSimulation() {
+      const checkedPids = Array.from(document.querySelectorAll('.web-sim-chk:checked')).map(el => parseInt(el.value));
+      const statusText = document.getElementById('web-sandbox-status-text');
+      if (statusText) {
+        statusText.innerText = checkedPids.length === 0 ? '0 apps selected (Showing current baseline)' : `${checkedPids.length} application(s) selected for simulated relief`;
+      }
+      try {
+        const res = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pids: checkedPids })
+        });
+        const r = await res.json();
+        document.getElementById('web-sim-cpu').innerText = r.simulated_cpu.toFixed(1) + '%';
+        document.getElementById('web-sim-cpu-sub').innerText = checkedPids.length > 0 ?
+          `Original: ${r.original_cpu.toFixed(1)}% (-${r.cpu_reduction.toFixed(1)}% relief)` :
+          `Current Baseline: ${r.original_cpu.toFixed(1)}%`;
+
+        document.getElementById('web-sim-ram').innerText = r.simulated_mem_percent.toFixed(1) + '%';
+        document.getElementById('web-sim-ram-sub').innerText = checkedPids.length > 0 ?
+          `Original: ${r.original_mem_percent.toFixed(1)}% (-${r.mem_percent_reduction.toFixed(1)}% relief)` :
+          `Current Baseline: ${r.original_mem_percent.toFixed(1)}%`;
+
+        document.getElementById('web-sim-freed').innerText = '+' + Math.round(r.freed_memory_mb) + ' MB';
+        document.getElementById('web-sim-freed-sub').innerText = `${checkedPids.length} application(s) modeled`;
+
+        document.getElementById('web-sim-health').innerText = Math.round(r.simulated_health_score) + '/100';
+        document.getElementById('web-sim-health-sub').innerText = checkedPids.length > 0 ?
+          `Potential Gain: +${r.health_score_gain.toFixed(1)} pts` :
+          `Baseline: ${Math.round(r.original_health_score)}/100 (No change)`;
+      } catch (e) { console.warn('Simulation error:', e); }
+    }
+
+    // Live Dashboard Simulator Table
+    async function loadSimulatorTable() {
+      await fetchProcesses();
+      const tbody = document.getElementById('simulator-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = allProcesses.slice(0, 50).map(p => `
+        <tr id="sim-row-${p.pid}">
+          <td><input type="checkbox" class="sim-chk" value="${p.pid}" data-name="${p.name}" onchange="onSimulatorCheckChange(${p.pid})"></td>
+          <td class="mono" style="color: var(--text-light-dim);">${p.pid}</td>
+          <td style="font-weight: 600; color: var(--text-light);">${p.name}</td>
+          <td class="mono" style="color: ${p.cpu > 5 ? 'var(--accent-lime)' : 'var(--text-light)'}; font-weight: ${p.cpu > 5 ? '700' : 'normal'};">${p.cpu.toFixed(1)}%</td>
+          <td class="mono">${Math.round(p.memory_mb)} MB</td>
+        </tr>
+      `).join('');
+      recalculateSimulation();
+    }
+
+    function onSimulatorCheckChange(pid) {
+      const chk = document.querySelector(`.sim-chk[value="${pid}"]`);
+      const row = document.getElementById('sim-row-' + pid);
+      if (chk && row) {
+        row.style.background = chk.checked ? 'rgba(212, 255, 0, 0.12)' : '';
+      }
+      recalculateSimulation();
+    }
+
+    function simulateSelectTop3() {
+      simulateClearAll();
+      const chks = document.querySelectorAll('.sim-chk');
+      for (let i = 0; i < Math.min(3, chks.length); i++) {
+        chks[i].checked = true;
+        const row = document.getElementById('sim-row-' + chks[i].value);
+        if (row) row.style.background = 'rgba(212, 255, 0, 0.12)';
+      }
+      recalculateSimulation();
+    }
+
+    function simulateSelectBrowsers() {
+      simulateClearAll();
+      const browserKeywords = ['chrome', 'msedge', 'edge', 'firefox', 'brave', 'opera'];
+      document.querySelectorAll('.sim-chk').forEach(chk => {
+        const name = (chk.getAttribute('data-name') || '').toLowerCase();
+        if (browserKeywords.some(b => name.includes(b))) {
+          chk.checked = true;
+          const row = document.getElementById('sim-row-' + chk.value);
+          if (row) row.style.background = 'rgba(212, 255, 0, 0.12)';
+        }
+      });
+      recalculateSimulation();
+    }
+
+    function simulateClearAll() {
+      document.querySelectorAll('.sim-chk').forEach(chk => {
+        chk.checked = false;
+        const row = document.getElementById('sim-row-' + chk.value);
+        if (row) row.style.background = '';
+      });
+      recalculateSimulation();
+    }
+
+    async function recalculateSimulation() {
+      const checkedPids = Array.from(document.querySelectorAll('.sim-chk:checked')).map(el => parseInt(el.value));
+      try {
+        const res = await fetch('/api/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pids: checkedPids })
+        });
+        const r = await res.json();
+        document.getElementById('sim-cpu').innerText = r.simulated_cpu.toFixed(1) + '%';
+        document.getElementById('sim-cpu-sub').innerText = checkedPids.length > 0 ?
+          `Original: ${r.original_cpu.toFixed(1)}% (-${r.cpu_reduction.toFixed(1)}% drop)` :
+          `Current Baseline: ${r.original_cpu.toFixed(1)}%`;
+
+        document.getElementById('sim-ram').innerText = r.simulated_mem_percent.toFixed(1) + '%';
+        document.getElementById('sim-ram-sub').innerText = checkedPids.length > 0 ?
+          `Original: ${r.original_mem_percent.toFixed(1)}% (-${r.mem_percent_reduction.toFixed(1)}% drop)` :
+          `Current Baseline: ${r.original_mem_percent.toFixed(1)}%`;
+
+        document.getElementById('sim-freed').innerText = '+' + Math.round(r.freed_memory_mb) + ' MB';
+        document.getElementById('sim-freed-sub').innerText = `${checkedPids.length} application(s) selected`;
+
+        document.getElementById('sim-health').innerText = Math.round(r.simulated_health_score) + '/100';
+        document.getElementById('sim-health-sub').innerText = checkedPids.length > 0 ?
+          `Gain: +${r.health_score_gain.toFixed(1)} pts (Swap: ${r.swap_relief_level})` :
+          `Baseline: ${Math.round(r.original_health_score)}/100 (No change)`;
+      } catch (e) { console.warn('Sim error:', e); }
+    }
+
+    // Workload Profiles
+    async function loadProfiles() {
+      try {
+        const res = await fetch('/api/profiles');
+        const data = await res.json();
+        const active = data.active;
+        const profs = data.profiles || [];
+        const container = document.getElementById('profiles-grid');
+        container.innerHTML = profs.map(p => `
+          <div style="background: var(--bg-dark-card); border: ${p.name===active?'2px solid var(--accent-lime)':'1px solid var(--border-dark)'}; border-radius: 6px; padding: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span class="display" style="font-weight: 700; font-size: 1.15rem; color: var(--text-light);">${p.icon} ${p.display_title}</span>
+              ${p.name===active?'<span class="badge-diagnostic healthy">ACTIVE</span>':`<button class="btn-osd-secondary" style="font-size: 0.72rem; padding: 4px 10px;" onclick="activateProfile('${p.name}')">Activate</button>`}
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-light-dim); margin-bottom: 12px; line-height: 1.5;">${p.description}</div>
+            <div class="mono" style="font-size: 0.72rem; color: var(--text-light-dim); border-top: 1px solid var(--border-dark); padding-top: 10px;">
+              • Thresholds: CPU Warn ${p.cpu_warning}%, RAM Warn ${p.memory_warning}%<br>
+              • Monitoring Cadence: ${p.refresh_interval_sec}s interval
+            </div>
+          </div>
+        `).join('');
+      } catch (e) { console.warn('Profiles load:', e); }
+    }
+
+    async function activateProfile(name) {
+      try {
+        await fetch('/api/set_profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profile: name })
+        });
+        loadProfiles();
+        fetchMetrics();
+      } catch (e) { alert('Error: ' + e); }
+    }
+
+    // Predictive Alerts
+    async function loadPredictiveAlerts() {
+      try {
+        const res = await fetch('/api/predictive');
+        const data = await res.json();
+        const container = document.getElementById('predictive-alerts-container');
+        const alerts = data.predictions || [];
+        if (alerts.length === 0) {
+          container.innerHTML = '<div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 28px; text-align: center; color: var(--signal-green);">✅ Trend projections stable. No impending resource exhaustion detected across recent samples.</div>';
+          return;
+        }
+        container.innerHTML = alerts.map(a => `
+          <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-left: 4px solid ${a.severity==='Critical'?'var(--signal-red)':'var(--signal-amber)'}; border-radius: 6px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span class="display" style="font-weight: 700; font-size: 1.05rem; color: var(--text-light);">🔮 ${a.headline}</span>
+              <span class="badge-diagnostic ${a.severity.toLowerCase()}">Confidence: ${a.confidence}</span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-light-dim); margin-bottom: 6px;"><b>Evidence:</b> ${a.evidence}</div>
+            <div style="font-size: 0.82rem; color: var(--signal-cyan); margin-bottom: 6px;"><b>Projected Exhaustion:</b> ${a.projected_minutes ? a.projected_minutes.toFixed(1) + ' minutes' : 'Continuous Pressure'}</div>
+            <div style="font-size: 0.82rem; color: var(--accent-lime); margin-bottom: 6px;"><b>Prevention Action:</b> ${a.prevention_action}</div>
+          </div>
+        `).join('');
+      } catch (e) { console.warn('Predictive alerts:', e); }
+    }
+
+    // Recovery Plans
+    async function loadRecoveryPlans() {
+      try {
+        const res = await fetch('/api/recovery');
+        const data = await res.json();
+        const container = document.getElementById('recovery-plans-container');
+        const plans = data.plans || [];
+        if (plans.length === 0) {
+          container.innerHTML = '<div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-radius: 6px; padding: 24px; text-align: center; color: var(--signal-green);">✅ No corrective actions required. All hardware components are operating within safe parameters.</div>';
+        } else {
+          container.innerHTML = plans.map(p => `
+            <div style="background: var(--bg-dark-card); border: 1px solid var(--border-dark); border-left: 4px solid ${p.risk_level==='Low'?'var(--signal-green)':'var(--signal-amber)'}; border-radius: 6px; padding: 18px; display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div class="display" style="font-weight: 700; font-size: 1.05rem; color: var(--text-light); margin-bottom: 4px;">${p.issue_title}</div>
+                <div style="font-size: 0.82rem; color: var(--signal-cyan);">Proposed: ${p.proposed_fix}</div>
+                <div style="font-size: 0.82rem; color: var(--accent-lime);">Benefit: ${p.expected_benefit}</div>
+                <div class="mono" style="font-size: 0.72rem; color: var(--text-light-dim); margin-top: 4px;">Target: ${p.target_process} (PID ${p.target_pid}) | Risk: ${p.risk_level}</div>
+              </div>
+              <button class="btn-osd-primary" style="font-size: 0.78rem; padding: 8px 14px;" onclick="executeRecovery('${p.plan_id}', '${p.action_type}', ${p.target_pid}, '${p.target_process}')">🛡️ Execute Plan</button>
+            </div>
+          `).join('');
+        }
+
+        const audit = data.audit_log || [];
+        if (audit.length > 0) {
+          document.getElementById('recovery-audit-log').innerHTML = audit.map(a => `
+            • [${a.action_name}] on <b>${a.target_process}</b> (PID ${a.target_pid}) — Freed RAM: +${Math.round(a.freed_memory_mb)} MB | CPU Drop: -${a.cpu_drop.toFixed(1)}% | Health: ${Math.round(a.before_health)} ➔ ${Math.round(a.after_health)} (${a.verified ? '✅ Verified' : 'Logged'})
+          `).join('<br>');
+        }
+      } catch (e) { console.warn('Recovery plans:', e); }
+    }
+
+    async function executeRecovery(planId, actionType, pid, procName) {
+      if (!confirm(`Confirm execution of recovery action: "${actionType}" on ${procName} (PID ${pid})?\\n\\nIdentity revalidation and outcome auditing will run automatically.`)) return;
+      try {
+        const res = await fetch('/api/execute_recovery', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan_id: planId, action_type: actionType, target_pid: pid, target_process: procName })
+        });
+        const result = await res.json();
+        alert(result.message || 'Action executed successfully.');
+        loadRecoveryPlans();
+        fetchMetrics();
+      } catch (e) { alert('Error: ' + e); }
+    }
+
+    // Ask OSD Assistant
+    async function sendChatMessage() {
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      sendPrompt(text);
+    }
+
+    async function sendPrompt(text) {
+      const box = document.getElementById('chat-messages');
+      box.innerHTML += `<div style="background: var(--accent-lime); color: #000; border-radius: 6px; padding: 10px 14px; font-size: 0.85rem; align-self: flex-end; max-width: 80%; font-weight: 500;"><b>You:</b> ${text}</div>`;
+      box.scrollTop = box.scrollHeight;
+      try {
+        const res = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: text })
+        });
+        const data = await res.json();
+        const formatted = (data.answer || '').replace(/\\n/g, '<br>');
+        box.innerHTML += `<div style="background: var(--bg-dark-elevated); border: 1px solid var(--border-dark); border-radius: 6px; padding: 12px 16px; font-size: 0.85rem; line-height: 1.5; color: var(--text-light); align-self: flex-start; max-width: 85%;"><b>OSD Assistant:</b><br>${formatted}</div>`;
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {
+        box.innerHTML += `<div style="color: var(--signal-red);">Error reaching local assistant engine.</div>`;
+      }
+    }
+
+    // Telemetry History
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/history');
+        const rows = await res.json();
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = rows.map(r => `
+          <tr>
+            <td class="mono">${r.time}</td>
+            <td class="mono" style="color: ${r.health_score>=80?'var(--signal-green)':'var(--signal-amber)'}; font-weight: 600;">${Math.round(r.health_score)}</td>
+            <td class="mono">${r.cpu_percent.toFixed(1)}%</td>
+            <td class="mono">${r.memory_percent.toFixed(1)}%</td>
+            <td class="mono">${r.swap_percent.toFixed(1)}%</td>
+            <td class="mono">${r.disk_percent.toFixed(1)}%</td>
+            <td class="mono">${r.process_count}</td>
+          </tr>
+        `).join('');
+      } catch (e) { console.warn('History load:', e); }
+    }
+
+    async function triggerDiagnosis() {
+      try {
+        const res = await fetch('/api/diagnose', { method: 'POST' });
+        const data = await res.json();
+        renderHeroConsole(data);
+        renderLiveOverview(data);
+        if (isLiveInstrumentOpen) {
+          switchLivePage('diagnosis', document.querySelectorAll('.live-nav-btn')[3]);
+        }
+      } catch (e) { console.warn('Diagnosis trigger:', e); }
+    }
+
+    // Polling Intervals
+    fetchMetrics();
+    fetchProcesses();
+    setInterval(fetchMetrics, 1500);
+    setInterval(fetchProcesses, 3000);
+  </script>
+</body>
+</html>
