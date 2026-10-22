@@ -1,10 +1,11 @@
 # ⚡ OSD — Know Your Machine
 ### PC Health & Performance Intelligence
 
+[![Live Web Companion](https://img.shields.io/badge/Live%20Simulator-GitHub%20Pages-D4FF00?logo=github&logoColor=0D0E11)](https://sainaathr.github.io/OSD/)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![GUI](https://img.shields.io/badge/GUI-PySide6--Essentials%20(Qt6)-41CD52?logo=qt&logoColor=white)](https://wiki.qt.io/Qt_for_Python)
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20%7C%20Linux%20%7C%20macOS-0078D6?logo=windows11&logoColor=white)](https://microsoft.com)
-[![Testing](https://img.shields.io/badge/pytest-80%20passed%20(100%25)-success?logo=pytest)](https://pytest.org/)
+[![Testing](https://img.shields.io/badge/pytest-97%20passed%20(100%25)-success?logo=pytest)](https://pytest.org/)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero%20External%20Telemetry-purple)](https://github.com)
 
 **OSD** helps people understand their PC's health, discover performance bottlenecks, monitor system resources in real-time, and find sensible, verified ways to improve performance. Evolving far beyond a traditional Task Manager, OSD translates raw operating system telemetry into understandable diagnostic narratives, resource exhaustion runways, and safe recovery paths.
