@@ -34,3 +34,7 @@ Desktop.ini
 
 # Logs
 *.log
+
+# PyInstaller build artifacts
+build/
+dist/

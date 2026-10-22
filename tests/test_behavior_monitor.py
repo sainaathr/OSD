@@ -1,5 +1,5 @@
 """
-Tests for OSense 2.0 Process Behavior Monitor.
+Tests for OSD Process Behavior Monitor.
 Validates behavior anomaly alerts: CPU surges, monotonic memory growth,
 thread explosion, and non-invasive telemetry analysis.
 """

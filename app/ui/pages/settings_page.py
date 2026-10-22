@@ -212,7 +212,7 @@ class SettingsPage(QWidget):
         pl.addWidget(self.api_key_frame)
 
         privacy_note = QLabel(
-            "🔒 <b>LOCAL-FIRST ARCHITECTURE:</b> OSense runs 100% on-device. No telemetry metrics, process names, or hardware IDs "
+            "🔒 <b>LOCAL-FIRST ARCHITECTURE:</b> OSD runs 100% on-device. No telemetry metrics, process names, or hardware IDs "
             "are transmitted to external servers. All historical telemetry is stored in your local SQLite database."
         )
         privacy_note.setStyleSheet(f"color: {COLORS['accent_teal']}; font-size: 11px;")
@@ -228,11 +228,11 @@ class SettingsPage(QWidget):
         al.setContentsMargins(18, 16, 18, 16)
         al.setSpacing(8)
 
-        g4_title = QLabel("ABOUT OSENSE")
+        g4_title = QLabel("ABOUT OSD")
         g4_title.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 10px; font-weight: 700; font-family: 'Consolas', monospace;")
         al.addWidget(g4_title)
 
-        about_title = QLabel("OSense 2.0 — Predictive OS Health & Safe Recovery Assistant")
+        about_title = QLabel("OSD — Operating System Diagnostics & Safe Recovery Assistant")
         about_title.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
         about_title.setStyleSheet(f"color: {COLORS['text_primary']};")
         al.addWidget(about_title)

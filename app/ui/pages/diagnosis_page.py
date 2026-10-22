@@ -248,6 +248,15 @@ class DiagnosisPage(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(scroll)
 
+    def stop(self):
+        """Stop background diagnosis worker safely."""
+        if self._diagnosis_worker and self._diagnosis_worker.isRunning():
+            self._diagnosis_worker.stop()
+            self._diagnosis_worker.wait(2000)
+            if self._diagnosis_worker.isRunning():
+                self._diagnosis_worker.terminate()
+                self._diagnosis_worker.wait(500)
+
     def run_full_diagnosis(self):
         """Run a complete system diagnosis via worker thread."""
         if self._diagnosis_worker and self._diagnosis_worker.isRunning():
@@ -371,7 +380,7 @@ class DiagnosisPage(QWidget):
 
         filename, _ = QFileDialog.getSaveFileName(
             self, "Save Diagnostic Audit Report",
-            f"OSense_Report_{time.strftime('%Y%m%d_%H%M%S')}.json",
+            f"OSD_Report_{time.strftime('%Y%m%d_%H%M%S')}.json",
             "JSON Files (*.json);;Text Files (*.txt)"
         )
         if not filename:
@@ -382,7 +391,7 @@ class DiagnosisPage(QWidget):
                 if filename.endswith('.json'):
                     json.dump(self._last_report, f, indent=2)
                 else:
-                    f.write("=== OSense Diagnostic Audit Report ===\n")
+                    f.write("=== OSD Diagnostic Audit Report ===\n")
                     f.write(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                     hs = self._last_report.get('health_score', {})
                     f.write(f"Health Score: {hs.get('total_score', 0):.0f}/100\n\n")

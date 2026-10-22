@@ -1,6 +1,6 @@
 """
 Main Window — Central window with 8-module grouped navigation, stacked pages,
-and integrated OSense intelligence engines.
+and integrated OSD intelligence engines.
 Art-directed shell with compact sidebar, custom wordmark, and persistent status telemetry.
 """
 import time
@@ -29,7 +29,7 @@ from app.analysis.predictive_engine import PredictiveEngine
 from app.analysis.simulator import WhatIfSimulator
 from app.recommendations.engine import RecommendationEngine
 from app.recommendations.recovery_advisor import RecoveryAdvisor
-from app.assistant.chat_engine import AskOSenseEngine
+from app.assistant.chat_engine import AskOSDEngine, AskOSenseEngine
 from app.profiles.profile_manager import ProfileManager
 from app.database.db_manager import DatabaseManager
 from app.workers.monitor_worker import MonitorWorker, DiagnosisWorker
@@ -65,11 +65,11 @@ class SidebarButton(QPushButton):
 
 
 class MainWindow(QMainWindow):
-    """OSense application window with 8 functional modules and bottom status telemetry."""
+    """OSD application window with 8 functional modules and bottom status telemetry."""
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("OSense — System Telemetry & Recovery")
+        self.setWindowTitle("OSD — System Telemetry & Recovery")
         self.setMinimumSize(1150, 750)
         self.resize(1340, 860)
 
@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
         self.predictive_engine = PredictiveEngine()
         self.behavior_monitor = ProcessBehaviorMonitor()
         self.recovery_advisor = RecoveryAdvisor(self.monitor, self.analysis, self.db)
-        self.chat_engine = AskOSenseEngine(self.monitor, self.analysis, self.predictive_engine, self.db)
+        self.chat_engine = AskOSDEngine(self.monitor, self.analysis, self.predictive_engine, self.db)
         self.simulator = WhatIfSimulator(self.analysis)
         self.profile_manager = ProfileManager(self.db)
 
@@ -111,6 +111,7 @@ class MainWindow(QMainWindow):
 
         self._setup_ui()
         self._start_monitoring()
+        self._start_local_companion()
 
     def _setup_ui(self):
         # Central widget with outer vertical layout (body + bottom status bar)
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow):
         )
         logo_row.addWidget(icon_badge)
 
-        wordmark = QLabel("OSENSE")
+        wordmark = QLabel("OSD")
         wordmark.setFont(QFont("Segoe UI", 14, QFont.Weight.Bold))
         wordmark.setStyleSheet(
             f"color: {COLORS['text_primary']}; letter-spacing: 2px; font-weight: 800;"
@@ -345,7 +346,8 @@ class MainWindow(QMainWindow):
 
         # Trigger page specific refresh on display
         if page_name == "History":
-            self.history_page.refresh()
+            if time.time() - getattr(self.history_page, "_last_refresh_time", 0) > 3.0:
+                self.history_page.refresh()
         elif page_name == "Intelligence":
             self.intelligence_page.refresh_profiles()
         elif page_name == "Settings":
@@ -444,7 +446,7 @@ class MainWindow(QMainWindow):
             self.sb_prof_lbl.setText(f"PROFILE: {prof.name.upper()}")
 
     def _on_monitor_error(self, error_msg):
-        print(f"[OSense] Monitor error: {error_msg}")
+        print(f"[OSD] Monitor error: {error_msg}")
 
     def _run_diagnosis(self):
         """Triggered by 'Diagnose My PC' button."""
@@ -469,12 +471,50 @@ class MainWindow(QMainWindow):
             t = self.db.get_setting('threshold_memory_critical', '')
             if t: thresholds.memory_critical = float(t)
         except Exception as e:
-            print(f"[OSense] Error applying settings: {e}")
+            print(f"[OSD] Error applying settings: {e}")
+
+    def _start_local_companion(self):
+        """Start local companion loopback service for browser integration."""
+        self.agent = None
+        try:
+            from osd_core.agent.server import OSDAgent
+            self.agent = OSDAgent(host="127.0.0.1", port=8080)
+            self.agent.start()
+            print("[OSD Desktop] Embedded companion server active on http://127.0.0.1:8080")
+        except OSError:
+            print("[OSD Desktop] Local Companion port 8080 already bound; existing service retained.")
+        except Exception as e:
+            print(f"[OSD Desktop] Embedded companion server skipped: {e}")
 
     def closeEvent(self, event):
-        """Clean shutdown."""
-        if hasattr(self, 'monitor_worker'):
-            self.monitor_worker.stop()
-            self.monitor_worker.wait(3000)
-        self.db.cleanup_old_data()
+        """Clean and safe shutdown of all background threads and resources."""
+        # 1. Stop diagnosis worker if active
+        if hasattr(self, 'diagnosis_page'):
+            try:
+                self.diagnosis_page.stop()
+            except Exception:
+                pass
+
+        # 2. Stop monitor worker gracefully, terminate if unresponsive
+        if hasattr(self, 'monitor_worker') and self.monitor_worker:
+            try:
+                self.monitor_worker.stop()
+                if not self.monitor_worker.wait(2000):
+                    self.monitor_worker.terminate()
+                    self.monitor_worker.wait(1000)
+            except Exception:
+                pass
+
+        # 3. Stop embedded companion server if active
+        if hasattr(self, 'agent') and self.agent:
+            try:
+                self.agent.stop()
+            except Exception:
+                pass
+
+        # 4. Clean up database history
+        try:
+            self.db.cleanup_old_data()
+        except Exception:
+            pass
         event.accept()

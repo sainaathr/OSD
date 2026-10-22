@@ -1,5 +1,5 @@
 """
-Tests for OSense 2.0 Predictive Performance Engine.
+Tests for OSD Predictive Performance Engine.
 Validates linear regression slopes, time-to-exhaustion projections,
 process memory growth attribution, and alert confidence/limitations.
 """

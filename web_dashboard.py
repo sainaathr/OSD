@@ -1,8 +1,8 @@
 """
-OSense 2.0 Web Companion — Full interactive live browser dashboard for OSense 2.0.
+OSD Web Companion — Full interactive live browser dashboard for OSD.
 Provides an HTTP web interface at http://localhost:8080 connected to the
 real-time SystemMonitor, AnalysisEngine, PredictiveEngine, RecoveryAdvisor,
-AskOSenseEngine, WhatIfSimulator, ProfileManager, and DatabaseManager.
+AskOSDEngine, WhatIfSimulator, ProfileManager, and DatabaseManager.
 """
 import sys
 import os
@@ -22,7 +22,7 @@ from app.analysis.predictive_engine import PredictiveEngine
 from app.analysis.simulator import WhatIfSimulator
 from app.recommendations.engine import RecommendationEngine
 from app.recommendations.recovery_advisor import RecoveryAdvisor
-from app.assistant.chat_engine import AskOSenseEngine
+from app.assistant.chat_engine import AskOSDEngine, AskOSenseEngine
 from app.profiles.profile_manager import ProfileManager
 from app.database.db_manager import DatabaseManager
 from app.utils.formatting import (
@@ -38,7 +38,7 @@ recommender = RecommendationEngine()
 predictive = PredictiveEngine()
 behavior = ProcessBehaviorMonitor()
 advisor = RecoveryAdvisor(monitor, analysis, db)
-chat_engine = AskOSenseEngine(monitor, analysis, predictive, db)
+chat_engine = AskOSDEngine(monitor, analysis, predictive, db)
 simulator = WhatIfSimulator(analysis)
 profile_mgr = ProfileManager(db)
 
@@ -90,7 +90,7 @@ HTML_PAGE = """<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OSense 2.0 — Predictive OS Health & Recovery Assistant</title>
+  <title>OSD — Predictive OS Health & Recovery Assistant</title>
   <style>
     :root {
       --bg-primary: #111315;
@@ -366,9 +366,9 @@ HTML_PAGE = """<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- Sidebar (11 OSense 2.0 Views) -->
+  <!-- Sidebar (11 OSD Views) -->
   <div class="sidebar">
-    <div class="logo">⚡ OSense 2.0</div>
+    <div class="logo">⚡ OSD</div>
     <div class="tagline">Predictive Recovery Assistant</div>
 
     <button class="nav-btn active" onclick="switchPage('overview', this)">📊 Overview</button>
@@ -377,7 +377,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <button class="nav-btn" onclick="switchPage('diagnosis', this)">🔍 Diagnosis</button>
     <button class="nav-btn" onclick="switchPage('predictive', this)">🔮 Predictive Alerts</button>
     <button class="nav-btn" onclick="switchPage('recovery', this)">🛡️ Recovery Advisor</button>
-    <button class="nav-btn" onclick="switchPage('assistant', this)">💬 Ask OSense</button>
+    <button class="nav-btn" onclick="switchPage('assistant', this)">💬 Ask OSD</button>
     <button class="nav-btn" onclick="switchPage('history', this)">⏳ System History</button>
     <button class="nav-btn" onclick="switchPage('simulator', this)">🧪 What-If Simulator</button>
     <button class="nav-btn" onclick="switchPage('profiles', this)">🎯 Workload Profiles</button>
@@ -396,7 +396,7 @@ HTML_PAGE = """<!DOCTYPE html>
       <div class="header">
         <div>
           <h1>System Health Overview</h1>
-          <p id="live-status">Connecting to OSense 2.0 live telemetry...</p>
+          <p id="live-status">Connecting to OSD live telemetry...</p>
         </div>
         <button class="btn-action" onclick="triggerDiagnosis()">🔍 Diagnose My PC</button>
       </div>
@@ -553,7 +553,7 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
       <div class="card" style="border-left: 4px solid var(--accent-cyan); line-height: 1.5; font-size: 0.85rem;">
         <b>Safe Recovery Workflow:</b> Detect ➔ Investigate ➔ Recommend ➔ Consent ➔ Execute ➔ Verify.<br>
-        <span style="color: var(--text-muted);">OSense revalidates process identity before execution and protects critical OS processes. Working set trimming and priority throttling are non-invasive.</span>
+        <span style="color: var(--text-muted);">OSD revalidates process identity before execution and protects critical OS processes. Working set trimming and priority throttling are non-invasive.</span>
       </div>
       <div id="recovery-plans-container" style="display: flex; flex-direction: column; gap: 12px;"></div>
       <div class="card">
@@ -562,18 +562,18 @@ HTML_PAGE = """<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- PAGE 7: ASK OSENSE -->
+    <!-- PAGE 7: ASK OSD -->
     <div id="page-assistant" class="page">
       <div class="header">
         <div>
-          <h1>💬 Ask OSense Assistant</h1>
+          <h1>💬 Ask OSD Assistant</h1>
           <p>Conversational performance analyst grounded in live telemetry and SQLite history (100% Offline)</p>
         </div>
       </div>
       <div class="card" style="min-height: 380px; display: flex; flex-direction: column;">
         <div id="chat-messages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; margin-bottom: 14px; max-height: 400px;">
           <div class="chat-bubble chat-assistant">
-            <b>OSense Assistant:</b> Hello! I am your offline system performance assistant. Ask me anything about your current hardware usage, bottlenecks, or past recovery results.
+            <b>OSD Assistant:</b> Hello! I am your offline system performance assistant. Ask me anything about your current hardware usage, bottlenecks, or past recovery results.
           </div>
         </div>
         <div style="margin-bottom: 10px;">
@@ -700,7 +700,7 @@ HTML_PAGE = """<!DOCTYPE html>
         <div style="font-weight: 700;">Local Environment Status</div>
         <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
           • Telemetry Engine: <b>psutil + Windows PSAPI Native</b><br>
-          • Database: <b>SQLite WAL Mode (~/.osense/osense.db)</b><br>
+          • Database: <b>SQLite WAL Mode (%LOCALAPPDATA%/OSD/osd.db)</b><br>
           • AI/Assistant Mode: <b>100% Offline Rule-Based NLP (Zero External Telemetry)</b><br>
           • Desktop GUI: <b>PySide6-Essentials (Qt 6.8)</b>
         </div>
@@ -918,7 +918,7 @@ HTML_PAGE = """<!DOCTYPE html>
         });
         const data = await res.json();
         const formatted = (data.answer || '').replace(/\\n/g, '<br>');
-        box.innerHTML += `<div class="chat-bubble chat-assistant"><b>OSense Assistant:</b><br>${formatted}</div>`;
+        box.innerHTML += `<div class="chat-bubble chat-assistant"><b>OSD Assistant:</b><br>${formatted}</div>`;
         box.scrollTop = box.scrollHeight;
       } catch (e) {
         box.innerHTML += `<div class="chat-bubble chat-assistant"><b>Error:</b> Could not reach local assistant engine.</div>`;
@@ -1167,7 +1167,17 @@ PREVIEWS_DIR = os.path.join(ROOT_DIR, "app_previews")
 ASSETS_DIR = os.path.join(ROOT_DIR, "assets")
 
 
-class OSenseRequestHandler(BaseHTTPRequestHandler):
+class OSDRequestHandler(BaseHTTPRequestHandler):
+    pass
+
+
+class OSenseRequestHandler(OSDRequestHandler):
+    """Backward-compatible alias for OSenseRequestHandler."""
+    pass
+
+
+# Rebind implementation onto OSDRequestHandler
+class OSDRequestHandler(BaseHTTPRequestHandler):
     def _serve_file(self, filepath, content_type=None):
         if not os.path.exists(filepath) or not os.path.isfile(filepath):
             self.send_response(404)
@@ -1420,15 +1430,9 @@ class OSenseRequestHandler(BaseHTTPRequestHandler):
 
 
 def run_server(port=8080):
-    server_address = ('', port)
-    httpd = ThreadingHTTPServer(server_address, OSenseRequestHandler)
-    print(f"OSense 2.0 Web Companion running at http://localhost:{port}/")
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    finally:
-        httpd.server_close()
+    from osd_core.agent.server import OSDAgent
+    agent = OSDAgent(project_root=os.path.dirname(os.path.abspath(__file__)), host="127.0.0.1", port=port)
+    agent.serve()
 
 
 if __name__ == "__main__":

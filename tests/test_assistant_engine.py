@@ -1,12 +1,12 @@
 """
-Tests for OSense 2.0 Ask OSense Assistant NLP Engine.
+Tests for OSD Ask OSD Assistant NLP Engine.
 Validates offline rule-based natural language responses grounded in live telemetry,
 active diagnoses, predictive analysis, and verified recovery history.
 """
 import pytest
 import time
 from unittest.mock import MagicMock
-from app.assistant.chat_engine import AskOSenseEngine
+from app.assistant.chat_engine import AskOSDEngine, AskOSenseEngine
 from app.monitoring.system_monitor import SystemMonitor, ProcessInfo, SystemSnapshot, CpuMetrics, MemoryMetrics, DiskMetrics, NetworkMetrics
 from app.analysis.engine import AnalysisEngine, Diagnosis, HealthScoreBreakdown
 from app.analysis.predictive_engine import PredictiveEngine, PredictiveAlert
@@ -52,11 +52,11 @@ def mock_deps(tmp_path):
     analysis.diagnose.return_value = []
     predictive.analyze_predictions.return_value = []
 
-    engine = AskOSenseEngine(monitor, analysis, predictive, db)
+    engine = AskOSDEngine(monitor, analysis, predictive, db)
     return engine, db
 
 
-class TestAskOSenseEngine:
+class TestAskOSDEngine:
 
     def test_question_why_is_pc_slow(self, mock_deps):
         engine, _ = mock_deps
@@ -107,5 +107,9 @@ class TestAskOSenseEngine:
     def test_unknown_fallback_privacy(self, mock_deps):
         engine, _ = mock_deps
         ans = engine.ask("Can you bake a cake?")
-        assert "OSense Assistant" in ans
+        assert "OSD Assistant" in ans
         assert "offline" in ans.lower() or "local" in ans.lower()
+
+
+# Backward-compatible alias
+TestAskOSenseEngine = TestAskOSDEngine

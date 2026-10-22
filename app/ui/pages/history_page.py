@@ -201,71 +201,85 @@ class HistoryPage(QWidget):
         self.avg_health_lbl.setText(f"Avg Health:  {stats.get('avg_health', 100):.0f}/100")
         self.actions_count_lbl.setText(f"Verified Actions: {stats.get('recovery_actions_count', 0)}")
 
+        self._last_refresh_time = time.time()
+
         # 1. Populate Actions Table
         actions = self.db.get_recovery_actions(limit=50)
-        self.actions_table.setRowCount(len(actions))
-        for row, a in enumerate(actions):
-            t_item = QTableWidgetItem(format_timestamp(a.get('timestamp', 0)))
-            t_item.setFont(QFont("Consolas", 10))
-            self.actions_table.setItem(row, 0, t_item)
+        self.actions_table.setUpdatesEnabled(False)
+        self.actions_table.blockSignals(True)
+        try:
+            self.actions_table.setRowCount(len(actions))
+            for row, a in enumerate(actions):
+                t_item = QTableWidgetItem(format_timestamp(a.get('timestamp', 0)))
+                t_item.setFont(QFont("Consolas", 10))
+                self.actions_table.setItem(row, 0, t_item)
 
-            self.actions_table.setItem(row, 1, QTableWidgetItem(a.get('action_name', '')))
-            self.actions_table.setItem(row, 2, QTableWidgetItem(f"{a.get('target_process')} (PID {a.get('target_pid')})"))
+                self.actions_table.setItem(row, 1, QTableWidgetItem(a.get('action_name', '')))
+                self.actions_table.setItem(row, 2, QTableWidgetItem(f"{a.get('target_process')} (PID {a.get('target_pid')})"))
 
-            freed_item = QTableWidgetItem(f"{a.get('freed_ram_mb', 0):.1f} MB")
-            freed_item.setFont(QFont("Consolas", 10))
-            freed_item.setForeground(QColor(COLORS['accent_lime']))
-            self.actions_table.setItem(row, 3, freed_item)
+                freed_item = QTableWidgetItem(f"{a.get('freed_ram_mb', 0):.1f} MB")
+                freed_item.setFont(QFont("Consolas", 10))
+                freed_item.setForeground(QColor(COLORS['accent_lime']))
+                self.actions_table.setItem(row, 3, freed_item)
 
-            cpu_item = QTableWidgetItem(f"{a.get('cpu_drop_percent', 0):.1f}%")
-            cpu_item.setFont(QFont("Consolas", 10))
-            self.actions_table.setItem(row, 4, cpu_item)
+                cpu_item = QTableWidgetItem(f"{a.get('cpu_drop_percent', 0):.1f}%")
+                cpu_item.setFont(QFont("Consolas", 10))
+                self.actions_table.setItem(row, 4, cpu_item)
 
-            hb_item = QTableWidgetItem(f"{a.get('health_before', 0):.0f}")
-            hb_item.setFont(QFont("Consolas", 10))
-            self.actions_table.setItem(row, 5, hb_item)
+                hb_item = QTableWidgetItem(f"{a.get('health_before', 0):.0f}")
+                hb_item.setFont(QFont("Consolas", 10))
+                self.actions_table.setItem(row, 5, hb_item)
 
-            ha_item = QTableWidgetItem(f"{a.get('health_after', 0):.0f}")
-            ha_item.setFont(QFont("Consolas", 10))
-            self.actions_table.setItem(row, 6, ha_item)
+                ha_item = QTableWidgetItem(f"{a.get('health_after', 0):.0f}")
+                ha_item.setFont(QFont("Consolas", 10))
+                self.actions_table.setItem(row, 6, ha_item)
 
-            st_item = QTableWidgetItem(a.get('verification_status', 'Verified'))
-            st_item.setFont(QFont("Consolas", 10))
-            st_item.setForeground(QColor(COLORS['accent_teal']))
-            self.actions_table.setItem(row, 7, st_item)
+                st_item = QTableWidgetItem(a.get('verification_status', 'Verified'))
+                st_item.setFont(QFont("Consolas", 10))
+                st_item.setForeground(QColor(COLORS['accent_teal']))
+                self.actions_table.setItem(row, 7, st_item)
+        finally:
+            self.actions_table.blockSignals(False)
+            self.actions_table.setUpdatesEnabled(True)
 
         # 2. Populate Resource Samples Table
         samples = self.db.get_resource_history(hours=self._current_hours, limit=100)
-        self.res_table.setRowCount(len(samples))
-        for row, s in enumerate(samples):
-            t_item = QTableWidgetItem(format_timestamp(s.get('timestamp', 0)))
-            t_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 0, t_item)
+        self.res_table.setUpdatesEnabled(False)
+        self.res_table.blockSignals(True)
+        try:
+            self.res_table.setRowCount(len(samples))
+            for row, s in enumerate(samples):
+                t_item = QTableWidgetItem(format_timestamp(s.get('timestamp', 0)))
+                t_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 0, t_item)
 
-            h_item = QTableWidgetItem(f"{s.get('health_score', 0):.0f}")
-            h_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 1, h_item)
+                h_item = QTableWidgetItem(f"{s.get('health_score', 0):.0f}")
+                h_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 1, h_item)
 
-            c_item = QTableWidgetItem(f"{s.get('cpu_percent', 0):.1f}%")
-            c_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 2, c_item)
+                c_item = QTableWidgetItem(f"{s.get('cpu_percent', 0):.1f}%")
+                c_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 2, c_item)
 
-            m_item = QTableWidgetItem(f"{s.get('memory_percent', 0):.1f}%")
-            m_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 3, m_item)
+                m_item = QTableWidgetItem(f"{s.get('memory_percent', 0):.1f}%")
+                m_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 3, m_item)
 
-            sw_item = QTableWidgetItem(f"{s.get('swap_percent', 0):.1f}%")
-            sw_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 4, sw_item)
+                sw_item = QTableWidgetItem(f"{s.get('swap_percent', 0):.1f}%")
+                sw_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 4, sw_item)
 
-            dio = s.get('disk_read_speed', 0) + s.get('disk_write_speed', 0)
-            d_item = QTableWidgetItem(format_speed(dio))
-            d_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 5, d_item)
+                dio = s.get('disk_read_speed', 0) + s.get('disk_write_speed', 0)
+                d_item = QTableWidgetItem(format_speed(dio))
+                d_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 5, d_item)
 
-            p_item = QTableWidgetItem(str(s.get('process_count', 0)))
-            p_item.setFont(QFont("Consolas", 10))
-            self.res_table.setItem(row, 6, p_item)
+                p_item = QTableWidgetItem(str(s.get('process_count', 0)))
+                p_item.setFont(QFont("Consolas", 10))
+                self.res_table.setItem(row, 6, p_item)
+        finally:
+            self.res_table.blockSignals(False)
+            self.res_table.setUpdatesEnabled(True)
 
         # 3. Populate Diagnoses & Alerts Table
         diags = self.db.get_diagnoses(limit=50)
@@ -290,34 +304,40 @@ class HistoryPage(QWidget):
             })
 
         all_events.sort(key=lambda x: x['timestamp'], reverse=True)
-        self.diag_table.setRowCount(len(all_events))
-        for row, ev in enumerate(all_events):
-            t_item = QTableWidgetItem(format_timestamp(ev['timestamp']))
-            t_item.setFont(QFont("Consolas", 10))
-            self.diag_table.setItem(row, 0, t_item)
+        self.diag_table.setUpdatesEnabled(False)
+        self.diag_table.blockSignals(True)
+        try:
+            self.diag_table.setRowCount(len(all_events))
+            for row, ev in enumerate(all_events):
+                t_item = QTableWidgetItem(format_timestamp(ev['timestamp']))
+                t_item.setFont(QFont("Consolas", 10))
+                self.diag_table.setItem(row, 0, t_item)
 
-            self.diag_table.setItem(row, 1, QTableWidgetItem(ev['category']))
-            self.diag_table.setItem(row, 2, QTableWidgetItem(ev['title']))
+                self.diag_table.setItem(row, 1, QTableWidgetItem(ev['category']))
+                self.diag_table.setItem(row, 2, QTableWidgetItem(ev['title']))
 
-            sev_item = QTableWidgetItem(ev['severity'].upper())
-            sev_item.setFont(QFont("Consolas", 10))
-            if 'crit' in ev['severity'].lower():
-                sev_item.setForeground(QColor(COLORS['red']))
-            elif 'warn' in ev['severity'].lower():
-                sev_item.setForeground(QColor(COLORS['amber']))
-            else:
-                sev_item.setForeground(QColor(COLORS['accent_teal']))
-            self.diag_table.setItem(row, 3, sev_item)
+                sev_item = QTableWidgetItem(ev['severity'].upper())
+                sev_item.setFont(QFont("Consolas", 10))
+                if 'crit' in ev['severity'].lower():
+                    sev_item.setForeground(QColor(COLORS['red']))
+                elif 'warn' in ev['severity'].lower():
+                    sev_item.setForeground(QColor(COLORS['amber']))
+                else:
+                    sev_item.setForeground(QColor(COLORS['accent_teal']))
+                self.diag_table.setItem(row, 3, sev_item)
 
-            sc_item = QTableWidgetItem(ev['score'])
-            sc_item.setFont(QFont("Consolas", 10))
-            self.diag_table.setItem(row, 4, sc_item)
+                sc_item = QTableWidgetItem(ev['score'])
+                sc_item.setFont(QFont("Consolas", 10))
+                self.diag_table.setItem(row, 4, sc_item)
+        finally:
+            self.diag_table.blockSignals(False)
+            self.diag_table.setUpdatesEnabled(True)
 
     def _export_csv(self):
         """Export snapshot samples to CSV."""
         filename, _ = QFileDialog.getSaveFileName(
             self, "Export Telemetry Dataset to CSV",
-            f"OSense_Telemetry_{time.strftime('%Y%m%d_%H%M%S')}.csv",
+            f"OSD_Telemetry_{time.strftime('%Y%m%d_%H%M%S')}.csv",
             "CSV Files (*.csv)"
         )
         if not filename:

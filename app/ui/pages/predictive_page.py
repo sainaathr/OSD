@@ -143,7 +143,7 @@ class PredictivePage(QWidget):
 
         empty_sub = QLabel(
             "All resource slopes are stable or fluctuating within normal tolerances. "
-            "OSense requires at least 4 rolling samples to build regression confidence intervals."
+            "OSD requires at least 4 rolling samples to build regression confidence intervals."
         )
         empty_sub.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 12px;")
         empty_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)

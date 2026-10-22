@@ -1,5 +1,5 @@
 """
-Tests for OSense 2.0 Autonomous Recovery Advisor.
+Tests for OSD Autonomous Recovery Advisor.
 Validates the 6-step lifecycle: Detect -> Investigate -> Recommend -> Consent -> Execute -> Verify.
 Tests safety guarantees, protected process refusal, and before/after verification auditing.
 """

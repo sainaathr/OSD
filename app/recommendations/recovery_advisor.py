@@ -11,13 +11,9 @@ import psutil
 from app.monitoring.system_monitor import SystemMonitor, ProcessInfo, SystemSnapshot
 from app.analysis.engine import AnalysisEngine, Diagnosis, Severity
 from app.database.db_manager import DatabaseManager
+from osd_core.platform_support.factory import get_platform_adapter
 
-PROTECTED_PROCESSES = {
-    'system', 'smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe',
-    'lsass.exe', 'svchost.exe', 'winlogon.exe', 'dwm.exe', 'explorer.exe',
-    'registry', 'system idle process', 'secure system', 'ntoskrnl.exe',
-    'windowsdefender', 'msmpeng.exe', 'nissrv.exe', 'securityhealthservice.exe',
-}
+PROTECTED_PROCESSES = get_platform_adapter().get_protected_processes()
 
 
 @dataclass
@@ -60,12 +56,14 @@ class RecoveryAdvisor:
         self.monitor = monitor
         self.analysis = analysis if analysis is not None else AnalysisEngine()
         self.db = db if db is not None else DatabaseManager()
+        self.adapter = getattr(monitor, 'adapter', None) or get_platform_adapter()
 
     def generate_plans(self, diagnoses: list[Diagnosis], snapshot: SystemSnapshot,
                        processes: list[ProcessInfo]) -> list[RecoveryPlan]:
         """Convert detected issues into structured recovery plans."""
         plans: list[RecoveryPlan] = []
         health = self.analysis.calculate_health_score(snapshot)
+        can_trim = self.adapter.can_trim_working_set()
 
         for diag in diagnoses:
             if diag.severity == Severity.HEALTHY:
@@ -93,7 +91,7 @@ class RecoveryAdvisor:
                     ))
 
                     # Plan B: Graceful Termination (Medium Risk) - Never for protected OS processes
-                    if p.name.lower() not in PROTECTED_PROCESSES:
+                    if not self.adapter.is_protected_process(p.name):
                         plans.append(RecoveryPlan(
                             plan_id=f"term_{p.pid}_{int(time.time())}",
                             issue_title=f"High CPU Drain by {p.name}",
@@ -114,25 +112,42 @@ class RecoveryAdvisor:
             if "Memory" in diag.title or "Thrashing" in diag.title:
                 heavy_mem = sorted([p for p in processes if p.memory_mb > 350.0], key=lambda x: x.memory_mb, reverse=True)
                 for p in heavy_mem[:2]:
-                    # Plan A: Working set trim
-                    plans.append(RecoveryPlan(
-                        plan_id=f"trim_{p.pid}_{int(time.time())}",
-                        issue_title=f"Memory Pressure from {p.name}",
-                        action_type="trim_memory",
-                        target_process=p.name,
-                        target_pid=p.pid,
-                        proposed_fix=f"Request OS working set trim for {p.name}.",
-                        expected_benefit=f"Flushes unreferenced memory pages from RAM back to virtual memory safely.",
-                        risk_level="Low",
-                        evidence=f"Occupying {p.memory_mb:.0f} MB of physical RAM.",
-                        probable_cause="Accumulated working set memory pages.",
-                        baseline_cpu=snapshot.cpu.overall_percent,
-                        baseline_mem_mb=p.memory_mb,
-                        baseline_health=health.total_score,
-                    ))
+                    # Plan A: Working set trim (only on platforms supporting it, e.g. Windows)
+                    if can_trim:
+                        plans.append(RecoveryPlan(
+                            plan_id=f"trim_{p.pid}_{int(time.time())}",
+                            issue_title=f"Memory Pressure from {p.name}",
+                            action_type="trim_memory",
+                            target_process=p.name,
+                            target_pid=p.pid,
+                            proposed_fix=f"Request OS working set trim for {p.name}.",
+                            expected_benefit=f"Flushes unreferenced memory pages from RAM back to virtual memory safely.",
+                            risk_level="Low",
+                            evidence=f"Occupying {p.memory_mb:.0f} MB of physical RAM.",
+                            probable_cause="Accumulated working set memory pages.",
+                            baseline_cpu=snapshot.cpu.overall_percent,
+                            baseline_mem_mb=p.memory_mb,
+                            baseline_health=health.total_score,
+                        ))
+                    else:
+                        plans.append(RecoveryPlan(
+                            plan_id=f"prio_mem_{p.pid}_{int(time.time())}",
+                            issue_title=f"Memory Pressure from {p.name}",
+                            action_type="lower_priority",
+                            target_process=p.name,
+                            target_pid=p.pid,
+                            proposed_fix=f"Lower scheduling priority for {p.name}.",
+                            expected_benefit="Limits CPU cycles for background memory-heavy application.",
+                            risk_level="Low",
+                            evidence=f"Occupying {p.memory_mb:.0f} MB of physical RAM.",
+                            probable_cause="Heavy background memory allocation.",
+                            baseline_cpu=snapshot.cpu.overall_percent,
+                            baseline_mem_mb=p.memory_mb,
+                            baseline_health=health.total_score,
+                        ))
 
                     # Plan B: Close application - Never for protected OS processes
-                    if p.name.lower() not in PROTECTED_PROCESSES:
+                    if not self.adapter.is_protected_process(p.name):
                         plans.append(RecoveryPlan(
                             plan_id=f"close_{p.pid}_{int(time.time())}",
                             issue_title=f"Large RAM Consumption by {p.name}",

@@ -10,21 +10,33 @@ from contextlib import contextmanager
 
 
 class DatabaseManager:
-    """Manages SQLite database for OSense."""
+    """Manages SQLite database for OSD."""
     
     def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
-            app_data = os.path.join(os.path.expanduser("~"), ".osense")
-            os.makedirs(app_data, exist_ok=True)
-            db_path = os.path.join(app_data, "osense.db")
+            try:
+                from osd_core.configuration.paths import get_db_path
+                db_path = get_db_path()
+            except ImportError:
+                local_app = os.environ.get('LOCALAPPDATA')
+                if local_app:
+                    app_data = os.path.join(local_app, "OSD")
+                else:
+                    app_data = os.path.join(os.path.expanduser("~"), ".osd")
+                os.makedirs(app_data, exist_ok=True)
+                db_path = os.path.join(app_data, "osd.db")
+                # Fallback to legacy database if it exists and standard does not
+                legacy_db = os.path.join(os.path.expanduser("~"), ".osense", "osense.db")
+                if not os.path.exists(db_path) and os.path.exists(legacy_db):
+                    db_path = legacy_db
         self.db_path = db_path
         self._init_db()
     
     @contextmanager
     def _get_conn(self):
-        conn = sqlite3.connect(self.db_path)
+        conn = sqlite3.connect(self.db_path, timeout=30.0)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout = 30000")
         try:
             yield conn
             conn.commit()
@@ -38,6 +50,7 @@ class DatabaseManager:
         """Initialize database tables."""
         try:
             with self._get_conn() as conn:
+                conn.execute("PRAGMA journal_mode=WAL")
                 conn.executescript("""
                     CREATE TABLE IF NOT EXISTS resource_history (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -119,7 +132,7 @@ class DatabaseManager:
                     CREATE INDEX IF NOT EXISTS idx_recovery_actions_ts ON recovery_actions(timestamp);
                 """)
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not initialize database: {e}")
+            print(f"[OSD DB] Warning: Could not initialize database: {e}")
     
     # --- Resource History ---
     def save_resource_sample(self, timestamp: float, cpu: float, memory: float,
@@ -137,7 +150,7 @@ class DatabaseManager:
                 """, (timestamp, cpu, memory, swap, disk, disk_read, disk_write,
                       net_up, net_down, proc_count, health_score))
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not save resource sample: {e}")
+            print(f"[OSD DB] Warning: Could not save resource sample: {e}")
     
     def get_resource_history(self, hours: float = 1.0, limit: int = 500) -> list[dict]:
         try:
@@ -167,7 +180,7 @@ class DatabaseManager:
                 """, (timestamp, title, severity, evidence, probable_cause,
                       confidence, recommendation, explanation, report_json))
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not save diagnosis: {e}")
+            print(f"[OSD DB] Warning: Could not save diagnosis: {e}")
     
     def get_diagnoses(self, limit: int = 50) -> list[dict]:
         try:
@@ -197,7 +210,7 @@ class DatabaseManager:
                     INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)
                 """, (key, value))
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not save setting: {e}")
+            print(f"[OSD DB] Warning: Could not save setting: {e}")
     
     def get_all_settings(self) -> dict[str, str]:
         try:
@@ -231,7 +244,7 @@ class DatabaseManager:
                       after_health, freed_memory_mb, cpu_drop, health_gain, int(verified), final_notes))
                 return cur.lastrowid
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not save recovery action: {e}")
+            print(f"[OSD DB] Warning: Could not save recovery action: {e}")
             return -1
 
     def get_recovery_actions(self, limit: int = 50) -> list[dict]:
@@ -267,7 +280,7 @@ class DatabaseManager:
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 """, (ts, alert_type, process_name, pid, severity, description, details))
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not save behavior alert: {e}")
+            print(f"[OSD DB] Warning: Could not save behavior alert: {e}")
 
     def get_behavior_alerts(self, limit: int = 50) -> list[dict]:
         try:
@@ -329,7 +342,7 @@ class DatabaseManager:
                 conn.execute("DELETE FROM recovery_actions WHERE timestamp < ?", (cutoff,))
                 conn.execute("DELETE FROM behavior_alerts WHERE timestamp < ?", (cutoff,))
         except Exception as e:
-            print(f"[OSense DB] Warning: Cleanup failed: {e}")
+            print(f"[OSD DB] Warning: Cleanup failed: {e}")
     
     def clear_all_history(self):
         """Clear all historical data."""
@@ -341,7 +354,7 @@ class DatabaseManager:
                 conn.execute("DELETE FROM recovery_actions")
                 conn.execute("DELETE FROM behavior_alerts")
         except Exception as e:
-            print(f"[OSense DB] Warning: Could not clear history: {e}")
+            print(f"[OSD DB] Warning: Could not clear history: {e}")
     
     def get_history_stats(self) -> dict:
         """Get statistics about stored data."""

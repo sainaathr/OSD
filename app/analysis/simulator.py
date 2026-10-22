@@ -118,3 +118,45 @@ class WhatIfSimulator:
             health_score_gain=health_gain,
             swap_relief_level=swap_relief,
         )
+
+    def simulate_process_termination(self, snapshot: SystemSnapshot,
+                                     processes: list[ProcessInfo],
+                                     selected_pids: list[int]) -> SimulationResult:
+        """Simulate the effect of terminating a set of processes identified by PID."""
+        selected = [p for p in processes if p.pid in selected_pids]
+        return self.simulate_closing_processes(snapshot, selected)
+
+    def simulate_condition_shift(self, snapshot: SystemSnapshot,
+                                 cpu_shift: float = 0.0,
+                                 mem_shift: float = 0.0,
+                                 disk_io_mb: float = 0.0,
+                                 selected_processes: list[ProcessInfo] = None) -> tuple[SystemSnapshot, HealthScoreBreakdown]:
+        """Model a synthetic system state combining base snapshot, condition adjustments, and process terminations."""
+        from copy import deepcopy
+        sim_snap = deepcopy(snapshot)
+
+        total_freed_mb = sum(p.memory_mb for p in (selected_processes or []))
+        total_cpu_freed = sum(p.cpu_percent for p in (selected_processes or []))
+
+        # Apply process relief
+        base_cpu = max(1.0, snapshot.cpu.overall_percent - total_cpu_freed)
+        total_ram_mb = snapshot.memory.total / (1024 * 1024) if snapshot.memory.total > 0 else 16384.0
+        used_ram_mb = max(100.0, (snapshot.memory.used / (1024 * 1024)) - total_freed_mb)
+        base_mem_pct = max(5.0, (used_ram_mb / total_ram_mb) * 100.0)
+
+        # Apply synthetic condition shifts
+        sim_cpu = max(1.0, min(100.0, base_cpu + cpu_shift))
+        sim_mem_pct = max(5.0, min(100.0, base_mem_pct + mem_shift))
+
+        sim_snap.cpu.overall_percent = sim_cpu
+        sim_snap.memory.percent = sim_mem_pct
+        sim_snap.memory.used = int((sim_mem_pct / 100.0) * snapshot.memory.total)
+        sim_snap.memory.available = max(0, snapshot.memory.total - sim_snap.memory.used)
+
+        if disk_io_mb > 0:
+            bytes_sec = disk_io_mb * 1024 * 1024
+            sim_snap.disk.read_bytes_per_sec = bytes_sec * 0.5
+            sim_snap.disk.write_bytes_per_sec = bytes_sec * 0.5
+
+        health = self.analysis.calculate_health_score(sim_snap)
+        return sim_snap, health

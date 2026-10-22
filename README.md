@@ -3,8 +3,8 @@
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![GUI](https://img.shields.io/badge/GUI-PySide6--Essentials%20(Qt6)-41CD52?logo=qt&logoColor=white)](https://wiki.qt.io/Qt_for_Python)
-[![Platform](https://img.shields.io/badge/Platform-Windows%2011%20%7C%20Linux-0078D6?logo=windows11&logoColor=white)](https://microsoft.com)
-[![Testing](https://img.shields.io/badge/pytest-52%20passed%20(100%25)-success?logo=pytest)](https://pytest.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11%20%7C%20Linux%20%7C%20macOS-0078D6?logo=windows11&logoColor=white)](https://microsoft.com)
+[![Testing](https://img.shields.io/badge/pytest-80%20passed%20(100%25)-success?logo=pytest)](https://pytest.org/)
 [![Privacy](https://img.shields.io/badge/Privacy-100%25%20Local%20%7C%20Zero%20External%20Telemetry-purple)](https://github.com)
 
 **OSD** helps people understand their PC's health, discover performance bottlenecks, monitor system resources in real-time, and find sensible, verified ways to improve performance. Evolving far beyond a traditional Task Manager, OSD translates raw operating system telemetry into understandable diagnostic narratives, resource exhaustion runways, and safe recovery paths.
@@ -13,7 +13,7 @@
 
 ---
 
-## 🌟 OSense 2.0 Core Features
+## 🌟 OSD Core Features
 
 ### 🔮 1. Predictive Performance Engine (`app/analysis/predictive_engine.py`)
 - **Time-Series Slope Estimation:** Computes rate of change ($\Delta y / \Delta t$) and Pearson correlation coefficients ($R^2$) across rolling metric samples.
@@ -37,7 +37,7 @@
 - **Protected OS Whitelist:** Strictly refuses actions against Windows critical processes (`csrss.exe`, `explorer.exe`, `svchost.exe`, `services.exe`, `dwm.exe`, `lsass.exe`, `windowsdefender`).
 - **Before-and-After Verification Auditing:** Samples telemetry immediately before and after execution to calculate freed RAM, CPU drop, and Health Score gains, saving verified records to SQLite.
 
-### 💬 4. Ask OSense Assistant (`app/assistant/chat_engine.py`)
+### 💬 4. Ask OSD Assistant (`app/assistant/chat_engine.py`)
 - **Offline Natural Language Query Engine:** Answers questions using actual system state, live metrics, and SQLite history without sending telemetry to external clouds.
 - **Supported Query Categories:**
   - *"Why is my PC slow?"* — Explains primary bottleneck, evidence, and active hogs.
@@ -77,7 +77,7 @@
 - **Responsible Labeling:** Clearly identifies behavioral anomalies as requiring investigation without making false malware claims from resource metrics alone.
 
 ### 🖥️ 9. Premium Desktop UI (`app/ui`)
-- **11 Modular Navigation Views:** Overview, Processes, Performance, Diagnosis, Predictive Alerts, Recovery Advisor, Ask OSense, System History, What-If Simulator, Workload Profiles, Settings.
+- **11 Modular Navigation Views:** Overview, Processes, Performance, Diagnosis, Predictive Alerts, Recovery Advisor, Ask OSD, System History, What-If Simulator, Workload Profiles, Settings.
 - **Sleek Dark Theme:** Curated deep charcoal palette with restrained cyan (`#22d3ee`) and violet (`#8b5cf6`) accents, clean typography, and responsive layouts.
 
 ---
@@ -138,7 +138,7 @@ Double-click `run.bat` or run:
 ```cmd
 run.bat
 ```
-This automatically verifies Python 3.11+, activates the virtual environment, verifies dependencies, and starts OSense 2.0.
+This automatically verifies Python 3.11+, activates the virtual environment, verifies dependencies, and starts OSD.
 
 ### Option B: Manual Launch from Shell
 ```powershell
@@ -159,7 +159,7 @@ Then open `http://localhost:8080/` in any modern web browser.
 
 ## 🧪 Automated Test Verification
 
-OSense 2.0 includes a comprehensive test suite covering predictive forecasting, recovery auditing, process safety, natural language queries, and database persistence:
+OSD includes a comprehensive 80-test automated suite covering cross-platform adapters, local agent security, predictive forecasting, recovery auditing, process safety, natural language queries, and database persistence:
 
 ```powershell
 .\.venv\Scripts\pytest.exe -v
@@ -169,29 +169,62 @@ OSense 2.0 includes a comprehensive test suite covering predictive forecasting, 
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0
-collected 52 items
+collected 80 items
 
-tests/test_analysis_engine.py .................................. [ 15%]
-tests/test_assistant_engine.py ................................ [ 28%]
-tests/test_behavior_monitor.py ................................. [ 34%]
-tests/test_database.py ........................................ [ 51%]
+tests/test_agent_security.py ................................... [  8%]
+tests/test_analysis_engine.py .................................. [ 18%]
+tests/test_assistant_engine.py ................................ [ 27%]
+tests/test_behavior_monitor.py ................................. [ 31%]
+tests/test_cross_platform_paths.py ............................ [ 41%]
+tests/test_database.py ........................................ [ 52%]
 tests/test_diagnosis_worker.py ................................. [ 53%]
-tests/test_monitoring.py ....................................... [ 63%]
-tests/test_predictive_engine.py ................................ [ 71%]
-tests/test_profiles.py ......................................... [ 80%]
-tests/test_recommendations.py .................................. [ 90%]
-tests/test_recovery_advisor.py ................................. [ 96%]
+tests/test_monitoring.py ....................................... [ 60%]
+tests/test_osd_core_models.py ................................. [ 66%]
+tests/test_platform_adapters.py ............................... [ 76%]
+tests/test_predictive_engine.py ................................ [ 81%]
+tests/test_profiles.py ......................................... [ 87%]
+tests/test_recommendations.py .................................. [ 93%]
+tests/test_recovery_advisor.py ................................. [ 97%]
 tests/test_simulator.py ........................................ [100%]
 
-============================= 52 passed in 15.03s =============================
+============================= 80 passed in 24.35s =============================
 ```
+
+---
+
+## 📦 Standalone Packaging & Distribution
+
+OSD provides standalone PyInstaller packaging with zero Python installation required for end users:
+
+### Windows 10/11:
+```cmd
+scripts\build_windows.bat
+# Output: dist\OSD\OSD.exe
+```
+
+### Linux (Ubuntu, Debian, Fedora, Arch):
+```bash
+chmod +x scripts/build_linux.sh
+./scripts/build_linux.sh
+# Output: dist/OSD/OSD
+```
+
+### macOS (Apple Silicon & Intel):
+```bash
+chmod +x scripts/build_macos.sh
+./scripts/build_macos.sh
+# Output: dist/OSD
+```
+
+Detailed signing, notarization, and distribution workflows are available in [docs/PACKAGING.md](file:///c:/Users/Administrator/Desktop/Projects/os%20project/docs/PACKAGING.md).
 
 ---
 
 ## 🛡️ Safety Guarantees & Known Limitations
 
-1. **Read-Only by Default:** OSense never terminates processes or modifies system priorities without explicit user review and confirmation.
-2. **Revalidation Guarantee:** Process identity is strictly verified by PID and executable name immediately before executing any approved action.
-3. **Protected Process Safeguards:** Core operating system components (`csrss.exe`, `explorer.exe`, `svchost.exe`, etc.) can never be targeted for termination.
-4. **Platform Scope:** Advanced working set memory page trimming uses the Windows PSAPI (`ctypes.windll.psapi.EmptyWorkingSet`). On non-Windows platforms, graceful termination and priority adjustment remain fully functional.
+1. **Read-Only by Default:** OSD never terminates processes or modifies system priorities without explicit user review and confirmation.
+2. **Revalidation Guarantee:** Process identity is strictly verified by PID and executable name immediately before executing any approved action to prevent PID reuse errors.
+3. **Protected Process Safeguards:** Core operating system components (`csrss.exe`, `explorer.exe`, `svchost.exe`, `systemd`, `launchd`, etc.) can never be targeted for termination.
+4. **Platform Scope:** Advanced working set memory page trimming uses the Windows PSAPI (`ctypes.windll.psapi.EmptyWorkingSet`). On non-Windows platforms (Linux/macOS), graceful termination and POSIX nice priority adjustment remain fully functional while unsupported memory trimming gracefully degrades without crashing.
 5. **Privacy Guarantee:** Zero cloud telemetry is transmitted. All diagnostic calculations, forecasts, and conversational queries execute locally on your machine.
+6. **Agent Security:** The optional local monitoring agent strictly binds to loopback (`127.0.0.1`), enforces origin validation, supports Private Network Access preflights, requires pairing tokens, and disallows dangerous remote execution.

@@ -1,1 +1,1 @@
-# OSense Application Package
+# OSD Application Package

@@ -76,6 +76,9 @@ class LiveTechnicalChart(QFrame):
 
         self.ax = self.fig.add_subplot(111)
         self._setup_axes()
+        self._line, = self.ax.plot([], [], color=self._line_color, linewidth=1.4, antialiased=True)
+        self._fill = None
+        self._dirty = True
 
         layout.addWidget(self.canvas)
 
@@ -108,24 +111,22 @@ class LiveTechnicalChart(QFrame):
         while len(self._data) < points:
             self._data.appendleft(0.0)
         self.ax.set_xlim(0, self._max_points - 1)
+        if self.isVisible():
+            self._render_chart()
+        else:
+            self._dirty = True
+
+    def set_y_max(self, new_max: float):
+        if new_max > self._y_max:
+            self._y_max = new_max
+            self.ax.set_ylim(0, self._y_max)
+            self._dirty = True
 
     def add_value(self, value: float, display_override: str = ""):
         self._data.append(value)
-
-        self.ax.clear()
-        self._setup_axes()
-
         data_list = list(self._data)
-        x = list(range(len(data_list)))
 
-        # Clean fill under curve
-        self.ax.fill_between(x, data_list, alpha=0.08, color=self._line_color)
-        # Main crisp line
-        self.ax.plot(x, data_list, color=self._line_color, linewidth=1.4, antialiased=True)
-
-        self.canvas.draw_idle()
-
-        # Update telemetry summary
+        # Update telemetry summary text
         valid_pts = [v for v in data_list if v >= 0]
         if valid_pts:
             curr_val = valid_pts[-1]
@@ -140,6 +141,30 @@ class LiveTechnicalChart(QFrame):
                     f"AVG: {avg_val:.1f}{self.unit}   "
                     f"PEAK: {peak_val:.1f}{self.unit}"
                 )
+
+        if not self.isVisible():
+            self._dirty = True
+            return
+
+        self._render_chart()
+
+    def _render_chart(self):
+        data_list = list(self._data)
+        x = list(range(len(data_list)))
+        self._line.set_data(x, data_list)
+        if self._fill:
+            try:
+                self._fill.remove()
+            except Exception:
+                pass
+        self._fill = self.ax.fill_between(x, data_list, alpha=0.08, color=self._line_color)
+        self.canvas.draw_idle()
+        self._dirty = False
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._dirty:
+            self._render_chart()
 
 
 class PerformancePage(QWidget):
@@ -237,6 +262,13 @@ class PerformancePage(QWidget):
         self.disk_chart.set_max_points(pts)
         self.net_chart.set_max_points(pts)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.cpu_chart._render_chart()
+        self.ram_chart._render_chart()
+        self.disk_chart._render_chart()
+        self.net_chart._render_chart()
+
     def update_snapshot(self, snap: SystemSnapshot):
         """Update live charts with newly collected metrics."""
         self.cpu_chart.add_value(snap.cpu.overall_percent)
@@ -244,10 +276,10 @@ class PerformancePage(QWidget):
 
         disk_io_mb = (snap.disk.read_bytes_per_sec + snap.disk.write_bytes_per_sec) / (1024 * 1024)
         if disk_io_mb > self.disk_chart._y_max:
-            self.disk_chart._y_max = max(100.0, disk_io_mb * 1.3)
+            self.disk_chart.set_y_max(max(100.0, disk_io_mb * 1.3))
         self.disk_chart.add_value(disk_io_mb)
 
         net_kb = (snap.network.upload_speed + snap.network.download_speed) / 1024
         if net_kb > self.net_chart._y_max:
-            self.net_chart._y_max = max(1000.0, net_kb * 1.3)
+            self.net_chart.set_y_max(max(1000.0, net_kb * 1.3))
         self.net_chart.add_value(net_kb)

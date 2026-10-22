@@ -1,5 +1,5 @@
 """
-Ask OSense Assistant — Conversational performance analyst.
+Ask OSD Assistant — Conversational performance analyst.
 Answers questions using real telemetry, active root-cause diagnoses,
 predictive trends, and verified recovery history.
 100% Offline Rule-Based NLP engine by default; optional privacy-conscious custom AI hook.
@@ -14,7 +14,7 @@ from app.database.db_manager import DatabaseManager
 from app.utils.formatting import format_timestamp
 
 
-class AskOSenseEngine:
+class AskOSDEngine:
     """Conversational assistant grounded in live telemetry and SQLite history."""
 
     def __init__(self, monitor: SystemMonitor, analysis: AnalysisEngine,
@@ -144,7 +144,7 @@ class AskOSenseEngine:
     def _answer_what_changed(self, snap: SystemSnapshot, health) -> str:
         history = self.db.get_resource_history(hours=1.0, limit=20)
         if len(history) < 2:
-            return "Insufficient historical samples in database yet to compute changes. OSense records baseline metrics continuously every few seconds."
+            return "Insufficient historical samples in database yet to compute changes. OSD records baseline metrics continuously every few seconds."
 
         oldest = history[-1]
         delta_cpu = snap.cpu.overall_percent - (oldest.get('cpu_percent') or 0.0)
@@ -232,7 +232,7 @@ class AskOSenseEngine:
 
     def _answer_default(self, snap: SystemSnapshot, health) -> str:
         return (
-            f"I am **OSense Assistant**, your offline, local privacy-conscious system intelligence engine, "
+            f"I am **OSD Assistant**, your offline, local privacy-conscious system intelligence engine, "
             f"connected to your real-time hardware telemetry and historical database.\n\n"
             f"**Current Status:** System Health Score is **{health.total_score:.0f}/100** | CPU: **{snap.cpu.overall_percent:.1f}%** | RAM: **{snap.memory.percent:.1f}%**\n\n"
             "**Questions you can ask me:**\n"
@@ -244,3 +244,7 @@ class AskOSenseEngine:
             "• *Is the memory usage increasing?*\n"
             "• *Did the last recovery action improve performance?*"
         )
+
+
+# Backward compatibility alias
+AskOSenseEngine = AskOSDEngine

@@ -1,5 +1,5 @@
 """
-Script to capture screenshots of all redesigned OSense views with live data.
+Script to capture screenshots of all redesigned OSD views with live data.
 """
 import sys
 import os

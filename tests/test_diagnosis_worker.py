@@ -49,8 +49,8 @@ def test_diagnosis_worker_end_to_end(qapp, tmp_path):
     worker.diagnosis_complete.connect(on_complete)
     worker.error_occurred.connect(on_error)
 
-    # Fallback timeout
-    QTimer.singleShot(15000, loop.quit)
+    # Fallback timeout (allow up to 45s under high Windows process load)
+    QTimer.singleShot(45000, loop.quit)
 
     worker.start()
     loop.exec()

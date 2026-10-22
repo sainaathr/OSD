@@ -107,7 +107,7 @@ class ProfilesPage(QWidget):
         title_box.addWidget(title)
 
         desc = QLabel(
-            "Customize OSense's alert sensitivities, cadence, and recommendation focus "
+            "Customize OSD's alert sensitivities, cadence, and recommendation focus "
             "depending on your current task. Choose a profile below."
         )
         desc.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")

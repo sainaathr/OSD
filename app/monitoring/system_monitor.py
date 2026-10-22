@@ -3,9 +3,11 @@ System Monitor — Collects real-time system metrics using psutil.
 """
 import time
 import platform
+import threading
 from dataclasses import dataclass, field
 from typing import Optional
 import psutil
+from osd_core.platform_support.factory import get_platform_adapter
 
 
 @dataclass
@@ -94,10 +96,11 @@ class SystemMonitor:
     """Collects real-time system metrics using psutil."""
     
     def __init__(self):
+        self.adapter = get_platform_adapter()
         self._prev_net_io: Optional[psutil._common.snetio] = None
         self._prev_disk_io: Optional[dict] = None
-        self._prev_time: float = 0.0
         self._proc_cache: dict[int, psutil.Process] = {}
+        self._lock = threading.Lock()
         self._last_cpu_percent: float = 0.0
         self._last_percore_percent: list[float] = []
 
@@ -313,28 +316,28 @@ class SystemMonitor:
         processes = []
         current_pids = set()
 
-        for proc in psutil.process_iter(['pid', 'name', 'memory_percent',
-                                          'memory_info', 'status', 'create_time',
-                                          'username', 'num_threads', 'ppid']):
+        # Fast initial enumeration: skip expensive username and token queries
+        for proc in psutil.process_iter(['pid', 'name', 'memory_percent', 'memory_info']):
             try:
                 info = proc.info
                 pid = info.get('pid', 0)
                 current_pids.add(pid)
 
-                cached_proc = self._proc_cache.get(pid)
-                if cached_proc is None:
-                    cached_proc = proc
-                    self._proc_cache[pid] = proc
-                    try:
-                        cached_proc.cpu_percent(interval=None)
-                    except Exception:
-                        pass
-                    raw_cpu = 0.0
-                else:
-                    try:
-                        raw_cpu = cached_proc.cpu_percent(interval=None)
-                    except Exception:
+                with self._lock:
+                    cached_proc = self._proc_cache.get(pid)
+                    if cached_proc is None:
+                        cached_proc = proc
+                        self._proc_cache[pid] = proc
+                        try:
+                            cached_proc.cpu_percent(interval=None)
+                        except Exception:
+                            pass
                         raw_cpu = 0.0
+                    else:
+                        try:
+                            raw_cpu = cached_proc.cpu_percent(interval=None)
+                        except Exception:
+                            raw_cpu = 0.0
 
                 # Normalize per-process CPU to total system percentage (0-100%)
                 norm_cpu = round(raw_cpu / num_cores, 1)
@@ -349,21 +352,22 @@ class SystemMonitor:
                     cpu_percent=norm_cpu,
                     memory_percent=info.get('memory_percent', 0.0) or 0.0,
                     memory_mb=(info.get('memory_info').rss / (1024 * 1024)) if info.get('memory_info') else 0.0,
-                    status=info.get('status', 'unknown'),
-                    create_time=info.get('create_time', 0.0) or 0.0,
-                    username=info.get('username', '') or '',
-                    num_threads=info.get('num_threads', 0) or 0,
-                    ppid=info.get('ppid', 0) or 0,
+                    status='running',
+                    create_time=0.0,
+                    username='',
+                    num_threads=1,
+                    ppid=0,
                     group_name=group,
                 )
                 processes.append(pinfo)
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 continue
         
-        # Evict terminated PIDs from cache
-        dead_pids = set(self._proc_cache.keys()) - current_pids
-        for dead_pid in dead_pids:
-            self._proc_cache.pop(dead_pid, None)
+        # Evict terminated PIDs from cache safely
+        with self._lock:
+            dead_pids = set(self._proc_cache.keys()) - current_pids
+            for dead_pid in dead_pids:
+                self._proc_cache.pop(dead_pid, None)
 
         if sort_by == "cpu":
             # Put idle thread (pid 0 or name "system idle process") at bottom of active CPU list
@@ -375,6 +379,20 @@ class SystemMonitor:
         elif sort_by == "pid":
             processes.sort(key=lambda p: p.pid)
         
+        # Enrich the requested top slice with threads, status, and creation time
+        enrich_count = min(len(processes), min(limit, 35) if limit > 0 else 35)
+        with self._lock:
+            for i in range(enrich_count):
+                p = processes[i]
+                cached_proc = self._proc_cache.get(p.pid)
+                if cached_proc:
+                    try:
+                        p.status = cached_proc.status()
+                        p.num_threads = cached_proc.num_threads()
+                        p.create_time = cached_proc.create_time()
+                    except Exception:
+                        pass
+
         return processes[:limit] if limit > 0 else processes
 
     def get_process_groups(self, limit: int = 20) -> list[dict]:
@@ -403,22 +421,13 @@ class SystemMonitor:
 
     def terminate_process(self, pid: int, process_name: str) -> tuple[bool, str]:
         """Terminate a process after revalidating identity. Returns (success, message)."""
-        # System-critical process protection
-        protected = {
-            'system', 'smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe',
-            'lsass.exe', 'svchost.exe', 'winlogon.exe', 'dwm.exe', 'explorer.exe',
-            'registry', 'system idle process', 'secure system', 'ntoskrnl.exe',
-            'windowsdefender', 'msmpeng.exe', 'nissrv.exe', 'securityhealthservice.exe',
-        }
-        
-        if process_name.lower() in protected:
+        if self.adapter.is_protected_process(process_name):
             return False, f"Cannot terminate protected system process: {process_name}"
         
         try:
             proc = psutil.Process(pid)
-            # Revalidate PID matches expected process
             current_name = proc.name()
-            if current_name.lower() != process_name.lower():
+            if self.adapter.normalize_process_name(current_name) != self.adapter.normalize_process_name(process_name):
                 return False, (f"PID {pid} now belongs to '{current_name}', "
                              f"not '{process_name}'. Aborting for safety.")
             
@@ -436,47 +445,9 @@ class SystemMonitor:
             return False, f"Error terminating {process_name} (PID {pid}): {str(e)}"
 
     def adjust_process_priority(self, pid: int, priority_name: str) -> tuple[bool, str]:
-        """Adjust process priority safely (e.g., 'below_normal', 'normal', 'idle')."""
-        protected = {
-            'system', 'smss.exe', 'csrss.exe', 'wininit.exe', 'services.exe',
-            'lsass.exe', 'svchost.exe', 'winlogon.exe', 'dwm.exe', 'explorer.exe',
-        }
-        try:
-            proc = psutil.Process(pid)
-            if proc.name().lower() in protected:
-                return False, f"Cannot alter priority of critical system process: {proc.name()}"
-
-            priority_map = {
-                'idle': getattr(psutil, 'IDLE_PRIORITY_CLASS', 64),
-                'below_normal': getattr(psutil, 'BELOW_NORMAL_PRIORITY_CLASS', 16384),
-                'normal': getattr(psutil, 'NORMAL_PRIORITY_CLASS', 32),
-                'above_normal': getattr(psutil, 'ABOVE_NORMAL_PRIORITY_CLASS', 32768),
-            }
-            target = priority_map.get(priority_name.lower())
-            if target is None:
-                return False, f"Unsupported priority level: {priority_name}"
-
-            proc.nice(target)
-            return True, f"Adjusted priority of {proc.name()} (PID {pid}) to {priority_name}."
-        except psutil.AccessDenied:
-            return False, f"Access denied altering priority for PID {pid}."
-        except psutil.NoSuchProcess:
-            return False, f"Process PID {pid} not found."
-        except Exception as e:
-            return False, f"Error adjusting priority: {str(e)}"
+        """Adjust process priority safely via the platform adapter."""
+        return self.adapter.adjust_process_priority(pid, priority_name)
 
     def trim_working_set(self, pid: int) -> tuple[bool, str]:
-        """Request the OS to trim empty pages from process working set."""
-        try:
-            import ctypes
-            import ctypes.wintypes
-            proc = psutil.Process(pid)
-            process_handle = ctypes.windll.kernel32.OpenProcess(0x1F0FFF, False, pid)
-            if process_handle:
-                result = ctypes.windll.psapi.EmptyWorkingSet(process_handle)
-                ctypes.windll.kernel32.CloseHandle(process_handle)
-                if result:
-                    return True, f"Successfully requested working set trim for {proc.name()} (PID {pid})."
-            return False, f"Working set trim was not accepted by OS for PID {pid}."
-        except Exception as e:
-            return False, f"Working set trim unsupported or denied: {str(e)}"
+        """Request the OS to trim empty pages from process working set via the platform adapter."""
+        return self.adapter.trim_working_set(pid)

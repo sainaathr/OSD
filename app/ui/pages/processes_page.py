@@ -26,6 +26,7 @@ class ProcessesPage(QWidget):
         self._search_text = ""
         self._filter_mode = "all"  # 'all', 'high_cpu', 'high_ram'
         self._selected_proc: ProcessInfo = None
+        self._dirty = True
         self._setup_ui()
 
     def _setup_ui(self):
@@ -223,7 +224,17 @@ class ProcessesPage(QWidget):
     def update_processes(self, processes: list[ProcessInfo]):
         """Receive updated processes snapshot."""
         self._all_processes = processes
-        self._refresh_table()
+        if self.isVisible():
+            self._refresh_table()
+            self._dirty = False
+        else:
+            self._dirty = True
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._dirty:
+            self._refresh_table()
+            self._dirty = False
 
     def _on_search(self, text: str):
         self._search_text = text.strip().lower()
@@ -266,72 +277,103 @@ class ProcessesPage(QWidget):
         prev_pid = self._selected_proc.pid if self._selected_proc else None
         selected_row_to_restore = -1
 
-        self.table.setRowCount(len(procs))
-        for row, proc in enumerate(procs):
-            if prev_pid and proc.pid == prev_pid:
-                selected_row_to_restore = row
-                self._selected_proc = proc
+        self.table.setUpdatesEnabled(False)
+        self.table.blockSignals(True)
+        try:
+            self.table.setRowCount(len(procs))
+            for row, proc in enumerate(procs):
+                if prev_pid and proc.pid == prev_pid:
+                    selected_row_to_restore = row
+                    self._selected_proc = proc
 
-            # PID
-            pid_item = QTableWidgetItem(str(proc.pid))
-            pid_item.setData(Qt.ItemDataRole.UserRole, proc)
-            pid_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            pid_item.setFont(QFont("Consolas", 10))
-            pid_item.setForeground(QColor(COLORS['text_muted']))
-            self.table.setItem(row, 0, pid_item)
+                # PID
+                pid_item = self.table.item(row, 0)
+                if not pid_item:
+                    pid_item = QTableWidgetItem()
+                    pid_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    pid_item.setFont(QFont("Consolas", 10))
+                    pid_item.setForeground(QColor(COLORS['text_muted']))
+                    self.table.setItem(row, 0, pid_item)
+                pid_item.setText(str(proc.pid))
+                pid_item.setData(Qt.ItemDataRole.UserRole, proc)
 
-            # Name
-            name_item = QTableWidgetItem(proc.name)
-            name_item.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
-            self.table.setItem(row, 1, name_item)
+                # Name
+                name_item = self.table.item(row, 1)
+                if not name_item:
+                    name_item = QTableWidgetItem()
+                    name_item.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+                    self.table.setItem(row, 1, name_item)
+                name_item.setText(proc.name)
 
-            # CPU %
-            if proc.pid == 0:
-                cpu_item = QTableWidgetItem("Idle")
-                cpu_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                cpu_item.setFont(QFont("Consolas", 10))
-                cpu_item.setForeground(QColor(COLORS['text_muted']))
-            else:
-                cpu_item = QTableWidgetItem(f"{proc.cpu_percent:.1f}%")
-                cpu_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-                cpu_item.setFont(QFont("Consolas", 10))
-                if proc.cpu_percent >= 50:
-                    cpu_item.setForeground(QColor(COLORS['red']))
-                elif proc.cpu_percent >= 20:
-                    cpu_item.setForeground(QColor(COLORS['amber']))
+                # CPU %
+                cpu_item = self.table.item(row, 2)
+                if not cpu_item:
+                    cpu_item = QTableWidgetItem()
+                    cpu_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    cpu_item.setFont(QFont("Consolas", 10))
+                    self.table.setItem(row, 2, cpu_item)
+                if proc.pid == 0:
+                    cpu_item.setText("Idle")
+                    cpu_item.setForeground(QColor(COLORS['text_muted']))
                 else:
-                    cpu_item.setForeground(QColor(COLORS['text_primary']))
-            self.table.setItem(row, 2, cpu_item)
+                    cpu_item.setText(f"{proc.cpu_percent:.1f}%")
+                    if proc.cpu_percent >= 50:
+                        cpu_item.setForeground(QColor(COLORS['red']))
+                    elif proc.cpu_percent >= 20:
+                        cpu_item.setForeground(QColor(COLORS['amber']))
+                    else:
+                        cpu_item.setForeground(QColor(COLORS['text_primary']))
 
-            # RAM %
-            ram_pct_item = QTableWidgetItem(f"{proc.memory_percent:.1f}%")
-            ram_pct_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            ram_pct_item.setFont(QFont("Consolas", 10))
-            self.table.setItem(row, 3, ram_pct_item)
+                # RAM %
+                ram_pct_item = self.table.item(row, 3)
+                if not ram_pct_item:
+                    ram_pct_item = QTableWidgetItem()
+                    ram_pct_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    ram_pct_item.setFont(QFont("Consolas", 10))
+                    self.table.setItem(row, 3, ram_pct_item)
+                ram_pct_item.setText(f"{proc.memory_percent:.1f}%")
 
-            # Memory MB
-            mem_mb_item = QTableWidgetItem(f"{proc.memory_mb:.1f} MB")
-            mem_mb_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            mem_mb_item.setFont(QFont("Consolas", 10))
-            if proc.memory_mb >= 1024:
-                mem_mb_item.setForeground(QColor(COLORS['accent_teal']))
-            self.table.setItem(row, 4, mem_mb_item)
+                # Memory MB
+                mem_mb_item = self.table.item(row, 4)
+                if not mem_mb_item:
+                    mem_mb_item = QTableWidgetItem()
+                    mem_mb_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                    mem_mb_item.setFont(QFont("Consolas", 10))
+                    self.table.setItem(row, 4, mem_mb_item)
+                mem_mb_item.setText(f"{proc.memory_mb:.1f} MB")
+                if proc.memory_mb >= 1024:
+                    mem_mb_item.setForeground(QColor(COLORS['accent_teal']))
+                else:
+                    mem_mb_item.setForeground(QColor(COLORS['text_primary']))
 
-            # Status
-            st_item = QTableWidgetItem(proc.status.capitalize())
-            st_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            st_item.setFont(QFont("Segoe UI", 9))
-            st_item.setForeground(QColor(COLORS['text_secondary']))
-            self.table.setItem(row, 5, st_item)
+                # Status
+                st_item = self.table.item(row, 5)
+                if not st_item:
+                    st_item = QTableWidgetItem()
+                    st_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    st_item.setFont(QFont("Segoe UI", 9))
+                    st_item.setForeground(QColor(COLORS['text_secondary']))
+                    self.table.setItem(row, 5, st_item)
+                st_item.setText(proc.status.capitalize())
 
-            # Threads
-            th_item = QTableWidgetItem(str(proc.num_threads))
-            th_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            th_item.setFont(QFont("Consolas", 10))
-            self.table.setItem(row, 6, th_item)
+                # Threads
+                th_item = self.table.item(row, 6)
+                if not th_item:
+                    th_item = QTableWidgetItem()
+                    th_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                    th_item.setFont(QFont("Consolas", 10))
+                    self.table.setItem(row, 6, th_item)
+                th_item.setText(str(proc.num_threads))
+        finally:
+            self.table.blockSignals(False)
+            self.table.setUpdatesEnabled(True)
 
         if selected_row_to_restore >= 0:
             self.table.selectRow(selected_row_to_restore)
+            self._update_inspector(self._selected_proc)
+        elif self._selected_proc is None and len(procs) > 0:
+            self.table.selectRow(0)
+            self._selected_proc = procs[0]
             self._update_inspector(self._selected_proc)
 
     def _on_selection_changed(self):
@@ -351,9 +393,12 @@ class ProcessesPage(QWidget):
 
         row = selected[0].row()
         pid_item = self.table.item(row, 0)
+        if not pid_item:
+            return
         proc: ProcessInfo = pid_item.data(Qt.ItemDataRole.UserRole)
-        self._selected_proc = proc
-        self._update_inspector(proc)
+        if proc:
+            self._selected_proc = proc
+            self._update_inspector(proc)
 
     def _update_inspector(self, proc: ProcessInfo):
         if not proc:

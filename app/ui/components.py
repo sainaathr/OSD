@@ -1,5 +1,5 @@
 """
-OSense Reusable UI Components
+OSD Reusable UI Components
 Art-directed Swiss / Linear desktop widgets for data density, precision, and calm usability.
 """
 from collections import deque

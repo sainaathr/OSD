@@ -1,5 +1,5 @@
 """
-Ask OSense Assistant Page — Interactive conversational assistant view.
+Ask OSD Assistant Page — Interactive conversational assistant view.
 Provides instant answers grounded in live metrics, active bottlenecks, and SQLite history.
 """
 from PySide6.QtWidgets import (
@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
 
 from app.ui.styles import COLORS, card_style
-from app.assistant.chat_engine import AskOSenseEngine
+from app.assistant.chat_engine import AskOSDEngine, AskOSenseEngine
 
 
 class ChatMessageBubble(QFrame):
@@ -47,7 +47,7 @@ class ChatMessageBubble(QFrame):
 class AssistantPage(QWidget):
     """Conversational performance assistant interface."""
 
-    def __init__(self, engine: AskOSenseEngine, parent=None):
+    def __init__(self, engine: AskOSDEngine, parent=None):
         super().__init__(parent)
         self.engine = engine
         self._setup_ui()
@@ -59,7 +59,7 @@ class AssistantPage(QWidget):
 
         # Header
         title_box = QVBoxLayout()
-        title = QLabel("💬 Ask OSense Assistant")
+        title = QLabel("💬 Ask OSD Assistant")
         title.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
         title.setStyleSheet(f"color: {COLORS['text_primary']};")
         title_box.addWidget(title)
@@ -136,8 +136,8 @@ class AssistantPage(QWidget):
         main_layout.addLayout(input_bar)
 
         # Initial Welcome Message
-        self._add_message("OSense Assistant", (
-            "Hello! I am your **OSense Assistant**. I can inspect your live system hardware metrics, "
+        self._add_message("OSD Assistant", (
+            "Hello! I am your **OSD Assistant**. I can inspect your live system hardware metrics, "
             "explain probable causes for sluggish performance, identify resource-heavy applications, "
             "and verify the results of recovery actions.\n\n"
             "Try clicking one of the suggested prompts above or type your question below."
@@ -157,7 +157,7 @@ class AssistantPage(QWidget):
 
         # Generate answer from engine
         answer = self.engine.ask(text)
-        QTimer.singleShot(150, lambda: self._add_message("OSense Assistant", answer, is_user=False))
+        QTimer.singleShot(150, lambda: self._add_message("OSD Assistant", answer, is_user=False))
 
     def _add_message(self, sender: str, text: str, is_user: bool = False):
         bubble = ChatMessageBubble(sender, text, is_user=is_user)

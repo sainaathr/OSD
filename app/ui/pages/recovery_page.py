@@ -165,6 +165,8 @@ class RecoveryPage(QWidget):
         super().__init__(parent)
         self.advisor = advisor
         self._current_plans = []
+        self._dirty = False
+        self._last_plan_keys = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -194,7 +196,7 @@ class RecoveryPage(QWidget):
         bl.setSpacing(12)
 
         prot_lbl = QLabel(
-            "<b>VERIFICATION GUARANTEE:</b> OSense never executes destructive tasks in the background without explicit user authorization. Every executed fix records pre/post delta metrics to SQLite."
+            "<b>VERIFICATION GUARANTEE:</b> OSD never executes destructive tasks in the background without explicit user authorization. Every executed fix records pre/post delta metrics to SQLite."
         )
         prot_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px;")
         bl.addWidget(prot_lbl)
@@ -234,14 +236,33 @@ class RecoveryPage(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(scroll)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._dirty:
+            self._render_plans()
+            self._dirty = False
+
     def update_plans(self, plans: list[RecoveryPlan]):
         """Update live recovery proposals."""
         self._current_plans = plans
+        plan_keys = [(getattr(p, 'target_pid', 0), getattr(p, 'proposed_fix', ''), getattr(p, 'risk_level', '')) for p in plans]
+        if self._last_plan_keys == plan_keys:
+            return
+        self._last_plan_keys = plan_keys
+
+        if self.isVisible():
+            self._render_plans()
+            self._dirty = False
+        else:
+            self._dirty = True
+
+    def _render_plans(self):
         while self.plans_layout.count():
             item = self.plans_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
 
+        plans = self._current_plans
         if not plans:
             self.plans_count_lbl.setText("0 PENDING")
             self.plans_count_lbl.setStyleSheet(f"color: {COLORS['text_muted']}; font-family: 'Consolas', monospace;")

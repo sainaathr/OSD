@@ -1,5 +1,5 @@
 """
-Tests for OSense 2.0 What-If Resource Simulator.
+Tests for OSD What-If Resource Simulator.
 Validates transparent calculation of hypothetical resource relief,
 CPU reduction, RAM reclamation, Health Score gains, and sandbox safety.
 """
@@ -73,3 +73,51 @@ class TestWhatIfSimulator:
         # Check transparency metadata
         assert len(res.assumptions) > 0
         assert "SIMULATION MODE" in res.disclaimer
+
+    def test_simulate_process_termination_by_pid(self, simulator):
+        snap = create_mock_snapshot(cpu=70.0, mem=80.0)
+        procs = [
+            ProcessInfo(pid=5001, name="proc1.exe", cpu_percent=10.0, memory_percent=5.0, memory_mb=800.0,
+                        num_threads=4, create_time=time.time(), username="User"),
+            ProcessInfo(pid=5002, name="proc2.exe", cpu_percent=15.0, memory_percent=8.0, memory_mb=1200.0,
+                        num_threads=6, create_time=time.time(), username="User"),
+            ProcessInfo(pid=5003, name="proc3.exe", cpu_percent=5.0, memory_percent=2.0, memory_mb=300.0,
+                        num_threads=2, create_time=time.time(), username="User"),
+        ]
+        # Simulate terminating PID 5001 and 5002 only
+        res = simulator.simulate_process_termination(snap, procs, [5001, 5002])
+        assert res.selected_pids == [5001, 5002]
+        assert res.selected_names == ["proc1.exe", "proc2.exe"]
+        assert res.cpu_reduction == pytest.approx(25.0, abs=0.1)
+        assert res.freed_memory_mb == pytest.approx(2000.0, abs=1.0)
+        d = res.to_dict()
+        assert d['selected_pids'] == [5001, 5002]
+        assert 'disclaimer' in d
+
+    def test_simulate_condition_shift(self, simulator):
+        snap = create_mock_snapshot(cpu=40.0, mem=50.0)
+        sim_snap, health = simulator.simulate_condition_shift(
+            snap, cpu_shift=30.0, mem_shift=25.0, disk_io_mb=50.0
+        )
+        # Check that simulated snapshot reflects shifts
+        assert sim_snap.cpu.overall_percent == pytest.approx(70.0, abs=0.1)
+        assert sim_snap.memory.percent == pytest.approx(75.0, abs=0.1)
+        assert sim_snap.disk.read_bytes_per_sec > 0
+        # Health score must reflect elevated load
+        assert health.total_score < 100.0
+
+    def test_safe_isolation_zero_mutation(self, simulator):
+        snap = create_mock_snapshot(cpu=75.0, mem=80.0)
+        orig_cpu = snap.cpu.overall_percent
+        orig_mem = snap.memory.percent
+        orig_used = snap.memory.used
+        procs = [
+            ProcessInfo(pid=999, name="test.exe", cpu_percent=20.0, memory_percent=10.0, memory_mb=1600.0,
+                        num_threads=8, create_time=time.time(), username="User")
+        ]
+        _ = simulator.simulate_closing_processes(snap, procs)
+        _ = simulator.simulate_condition_shift(snap, cpu_shift=15.0, mem_shift=10.0)
+        # Verify original snapshot was untouched
+        assert snap.cpu.overall_percent == orig_cpu
+        assert snap.memory.percent == orig_mem
+        assert snap.memory.used == orig_used

@@ -32,6 +32,8 @@ class OverviewPage(QWidget):
         self.monitor = monitor
         self.db = db
         self._sample_count = 0
+        self._last_diag_keys = None
+        self._pending_top_procs = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -459,49 +461,76 @@ class OverviewPage(QWidget):
         else:
             self.headline.setText("Elevated resource contention detected.")
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._pending_top_procs is not None:
+            self.update_top_processes(self._pending_top_procs)
+            self._pending_top_procs = None
+
     def update_top_processes(self, processes: list[ProcessInfo]):
         """Populate the top processes table."""
+        if not self.isVisible():
+            self._pending_top_procs = processes
+            return
+        self._pending_top_procs = None
+
         # Filter out System Idle Process (PID 0) so actual active consumers show up
         filtered = [p for p in processes if p.pid != 0 and 'idle' not in p.name.lower()][:5]
         self.top_procs_table.setRowCount(len(filtered))
         for row, p in enumerate(filtered):
             # Process name
-            name_item = QTableWidgetItem(p.name)
-            name_item.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
-            self.top_procs_table.setItem(row, 0, name_item)
+            name_item = self.top_procs_table.item(row, 0)
+            if not name_item:
+                name_item = QTableWidgetItem()
+                name_item.setFont(QFont("Segoe UI", 10, QFont.Weight.DemiBold))
+                self.top_procs_table.setItem(row, 0, name_item)
+            name_item.setText(p.name)
 
             # PID (monospace)
-            pid_item = QTableWidgetItem(str(p.pid))
-            pid_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            pid_item.setFont(QFont("Consolas", 10))
-            pid_item.setForeground(QColor(COLORS['text_muted']))
-            self.top_procs_table.setItem(row, 1, pid_item)
+            pid_item = self.top_procs_table.item(row, 1)
+            if not pid_item:
+                pid_item = QTableWidgetItem()
+                pid_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                pid_item.setFont(QFont("Consolas", 10))
+                pid_item.setForeground(QColor(COLORS['text_muted']))
+                self.top_procs_table.setItem(row, 1, pid_item)
+            pid_item.setText(str(p.pid))
 
             # CPU %
-            cpu_item = QTableWidgetItem(f"{p.cpu_percent:.1f}%")
-            cpu_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            cpu_item.setFont(QFont("Consolas", 10))
+            cpu_item = self.top_procs_table.item(row, 2)
+            if not cpu_item:
+                cpu_item = QTableWidgetItem()
+                cpu_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                cpu_item.setFont(QFont("Consolas", 10))
+                self.top_procs_table.setItem(row, 2, cpu_item)
+            cpu_item.setText(f"{p.cpu_percent:.1f}%")
             if p.cpu_percent >= 30:
                 cpu_item.setForeground(QColor(COLORS['amber']))
             else:
                 cpu_item.setForeground(QColor(COLORS['text_primary']))
-            self.top_procs_table.setItem(row, 2, cpu_item)
 
             # Memory (MB)
-            mem_item = QTableWidgetItem(f"{p.memory_mb:.0f} MB")
-            mem_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            mem_item.setFont(QFont("Consolas", 10))
-            self.top_procs_table.setItem(row, 3, mem_item)
+            mem_item = self.top_procs_table.item(row, 3)
+            if not mem_item:
+                mem_item = QTableWidgetItem()
+                mem_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+                mem_item.setFont(QFont("Consolas", 10))
+                self.top_procs_table.setItem(row, 3, mem_item)
+            mem_item.setText(f"{p.memory_mb:.0f} MB")
 
     def update_diagnoses(self, diagnoses: list):
         """Update active findings from live diagnosis stream."""
+        non_healthy = [d for d in diagnoses if d.severity != Severity.HEALTHY]
+        diag_keys = [(d.severity, d.title) for d in non_healthy[:4]]
+        if self._last_diag_keys == diag_keys:
+            return
+        self._last_diag_keys = diag_keys
+
         # Clear findings layout
         while self.findings_container.count():
             item = self.findings_container.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
-
-        non_healthy = [d for d in diagnoses if d.severity != Severity.HEALTHY]
 
         if not non_healthy:
             ok_lbl = QLabel("●  All operational signals within expected baseline variance.")

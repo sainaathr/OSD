@@ -10,7 +10,7 @@ from app.database.db_manager import DatabaseManager
 @pytest.fixture
 def temp_db(tmp_path):
     """Fixture providing an isolated SQLite database."""
-    db_file = tmp_path / "test_osense.db"
+    db_file = tmp_path / "test_osd.db"
     return DatabaseManager(str(db_file))
 
 

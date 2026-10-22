@@ -1,5 +1,5 @@
 """
-Tests for OSense 2.0 Workload Profiles.
+Tests for OSD Workload Profiles.
 Validates profile switching (Study, Coding, Gaming, Battery Saver, Custom),
 threshold adaptation, monitoring cadence configuration, and SQLite persistence.
 """

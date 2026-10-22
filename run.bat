@@ -1,9 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
-title OSense — Intelligent Operating System Health ^& Resource Assistant
+title OSD — Operating System Diagnostics ^& Recovery Assistant
 echo =====================================================================
-echo   OSense — Intelligent Operating System Health ^& Resource Assistant
+echo   OSD — Operating System Diagnostics ^& Recovery Assistant
 echo =====================================================================
 echo.
 
@@ -61,13 +61,13 @@ if not exist ".venv\Scripts\python.exe" (
     echo [2/3] Virtual environment .venv detected.
 )
 
-:: 3. Launch OSense
-echo [3/3] Launching OSense desktop application...
+:: 3. Launch OSD
+echo [3/3] Launching OSD desktop application...
 echo.
 .\.venv\Scripts\python.exe main.py
 
 if %errorlevel% neq 0 (
     echo.
-    echo [WARNING] OSense exited with code %errorlevel%.
+    echo [WARNING] OSD exited with code %errorlevel%.
     pause
 )

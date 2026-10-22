@@ -41,7 +41,7 @@ class MonitorWorker(QThread):
         self._running = True
         self._interval = 2.0  # seconds
         self._mutex = QMutex()
-        self._sample_counter = 0
+        self._sample_counter = 4  # Save immediately on first iteration, then every N samples
         self._db_save_interval = 5  # save to DB every N samples
     
     def set_interval(self, seconds: float):
@@ -69,8 +69,8 @@ class MonitorWorker(QThread):
                 snapshot = self.monitor.collect_snapshot()
                 self.snapshot_ready.emit(snapshot)
                 
-                # Collect processes
-                processes = self.monitor.get_processes(sort_by="cpu", limit=200)
+                # Collect processes (limit to top 60 for optimal telemetry cadence)
+                processes = self.monitor.get_processes(sort_by="cpu", limit=60)
                 self.processes_ready.emit(processes)
                 
                 # Add to analysis history and calculate health
@@ -150,23 +150,45 @@ class DiagnosisWorker(QThread):
         self.analysis = analysis
         self.recommender = recommender
         self.db = db
+        self._running = True
+        self._mutex = QMutex()
+    
+    def stop(self):
+        self._mutex.lock()
+        self._running = False
+        self._mutex.unlock()
+
+    def _is_running(self) -> bool:
+        self._mutex.lock()
+        r = self._running
+        self._mutex.unlock()
+        return r
     
     def run(self):
         try:
+            if not self._is_running():
+                return
             self.progress_update.emit("Collecting system metrics...")
             snapshots = []
             
             # Collect multiple samples
             for i in range(3):
+                if not self._is_running():
+                    return
                 self.progress_update.emit(f"Collecting sample {i+1}/3...")
                 snap = self.monitor.collect_snapshot()
                 snapshots.append(snap)
                 self.analysis.add_snapshot(snap)
                 if i < 2:
-                    time.sleep(1.5)
+                    for _ in range(15):
+                        if not self._is_running():
+                            return
+                        time.sleep(0.1)
             
+            if not self._is_running():
+                return
             self.progress_update.emit("Analyzing processes...")
-            processes = self.monitor.get_processes(sort_by="cpu", limit=200)
+            processes = self.monitor.get_processes(sort_by="cpu", limit=60)
             
             self.progress_update.emit("Running analysis engine...")
             latest = snapshots[-1]
@@ -225,6 +247,8 @@ class DiagnosisWorker(QThread):
                 except Exception:
                     pass
             
+            if not self._is_running():
+                return
             self.progress_update.emit("Diagnosis complete!")
             self.diagnosis_complete.emit(report)
             

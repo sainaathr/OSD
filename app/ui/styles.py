@@ -1,5 +1,5 @@
 """
-OSense Design System — Linear / Swiss Precision Dark Theme
+OSD Design System — Linear / Swiss Precision Dark Theme
 Curated color tokens, typography hierarchy, and component styling.
 """
 
